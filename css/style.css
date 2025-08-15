@@ -1,0 +1,256 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+.game-container {
+    text-align: center;
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+}
+
+/* 玩家信息区域 */
+.player-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #6a4c93;
+    border-radius: 10px;
+    color: white;
+}
+
+.player-info.bottom {
+    margin-top: 15px;
+}
+
+.player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.player-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #333;
+}
+
+.player-name {
+    font-weight: bold;
+}
+
+.player-coins {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.coin-icon {
+    color: #ffd700;
+}
+
+.dice-icon {
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #333;
+}
+
+/* 棋盘样式 */
+.game-board {
+    width: 90vw;
+    max-width: 500px;
+    height: 90vw;
+    max-height: 500px;
+    background-color: #4a4a4a;
+    border: 2px solid #333;
+    border-radius: 10px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+    background-image: 
+        linear-gradient(45deg, #6a4c93 25%, transparent 25%),
+        linear-gradient(-45deg, #6a4c93 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #6a4c93 75%),
+        linear-gradient(-45deg, transparent 75%, #6a4c93 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+.game-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+#roll-dice {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#roll-dice:hover {
+    background-color: #45a049;
+}
+
+.dice {
+    width: 60px;
+    height: 60px;
+    background-color: #fff;
+    border: 2px solid #333;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.status {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* 棋子样式 */
+.player-piece {
+    width: 6%;
+    height: 6%;
+    border-radius: 50%;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border: 2px solid #333;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    font-size: 8px;
+}
+
+.player-red {
+    background-color: #c0392b;
+}
+
+.player-green {
+    background-color: #27ae60;
+}
+
+.player-blue {
+    background-color: #2980b9;
+}
+
+.player-yellow {
+    background-color: #f39c12;
+}
+
+/* 路径样式 */
+.path {
+    position: absolute;
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.path-common {
+    background-color: #ffffff;
+}
+
+.path-yellow {
+    background-color: #ffd700;
+}
+
+.path-red {
+    background-color: #ff4444;
+}
+
+.path-green {
+    background-color: #4caf50;
+}
+
+.path-blue {
+    background-color: #2196f3;
+}
+
+/* 出发点星星样式 */
+.start-star {
+    position: absolute;
+    width: 2%;
+    height: 2%;
+    background-color: #ffd700;
+    background-color: #ffd700;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    transform: translate(-50%, -50%);
+}
+
+.green-home {
+    top: 0;
+    left: 0;
+    background-color: #4caf50;
+}
+
+.blue-home {
+    top: 0;
+    right: 0;
+    background-color: #2196f3;
+}
+
+.yellow-home {
+    bottom: 0;
+    right: 0;
+    background-color: #ffd700;
+}
+
+.home-point {
+    position: absolute;
+    border-radius: 50%;
+    background-color: white;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    transform: translate(-50%, -50%);
+}
+
+/* 终点区域样式 */
+.finish-area {
+    width: 20%;
+    height: 20%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #9b59b6;
+    border: 3px solid #333;
+    border-radius: 50%;
+    box-shadow: 0 0 15px rgba(155, 89, 182, 0.7);
+}

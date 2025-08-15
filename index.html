@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ludo 游戏</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- 顶部玩家信息 -->
+        <div class="player-info">
+            <div class="player">
+                <div class="player-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="player-name">Saba</div>
+                <div class="player-coins">
+                    <i class="fas fa-coins coin-icon"></i>
+                    <span>400$</span>
+                </div>
+                <div class="dice-icon">
+                    <i class="fas fa-dice"></i>
+                </div>
+            </div>
+            <div class="player">
+                <div class="player-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="player-name">Sabbir</div>
+                <div class="player-coins">
+                    <i class="fas fa-coins coin-icon"></i>
+                    <span>400$</span>
+                </div>
+                <div class="dice-icon">
+                    <i class="fas fa-dice"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-board">
+            <!-- 游戏棋盘将在这里生成 -->
+        </div>
+
+        <!-- 底部玩家信息 -->
+        <div class="player-info bottom">
+            <div class="player">
+                <div class="player-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="player-name">You</div>
+                <div class="player-coins">
+                    <i class="fas fa-coins coin-icon"></i>
+                    <span>400$</span>
+                </div>
+                <div class="dice-icon active">
+                    <i class="fas fa-dice"></i>
+                </div>
+            </div>
+            <div class="player">
+                <div class="player-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="player-name">Hafiz</div>
+                <div class="player-coins">
+                    <i class="fas fa-coins coin-icon"></i>
+                    <span>400$</span>
+                </div>
+                <div class="dice-icon">
+                    <i class="fas fa-dice"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-controls">
+            <button id="roll-dice">掷骰子</button>
+            <div class="dice">0</div>
+            <div class="status">轮到你了</div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
