@@ -129,11 +129,153 @@ body {
     background-color: #fff;
     border: 2px solid #333;
     border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    font-weight: bold;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+/* 骰子点的通用样式 - 默认隐藏 */
+.dice-dot {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background-color: #333;
+    border-radius: 50%;
+    opacity: 0;
+}
+
+/* 1点样式 */
+.dice-1 .dot-1 {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 1;
+}
+
+/* 2点样式 */
+.dice-2 .dot-1 {
+    top: 20%;
+    left: 20%;
+    opacity: 1;
+}
+.dice-2 .dot-2 {
+    bottom: 20%;
+    right: 20%;
+    opacity: 1;
+}
+
+/* 3点样式 */
+.dice-3 .dot-1 {
+    top: 20%;
+    left: 20%;
+    opacity: 1;
+}
+.dice-3 .dot-2 {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 1;
+}
+.dice-3 .dot-3 {
+    bottom: 20%;
+    right: 20%;
+    opacity: 1;
+}
+
+/* 4点样式 */
+.dice-4 .dot-1 {
+    top: 20%;
+    left: 20%;
+    opacity: 1;
+}
+.dice-4 .dot-2 {
+    top: 20%;
+    right: 20%;
+    opacity: 1;
+}
+.dice-4 .dot-3 {
+    bottom: 20%;
+    left: 20%;
+    opacity: 1;
+}
+.dice-4 .dot-4 {
+    bottom: 20%;
+    right: 20%;
+    opacity: 1;
+}
+
+/* 5点样式 */
+.dice-5 .dot-1 {
+    top: 20%;
+    left: 20%;
+    opacity: 1;
+}
+.dice-5 .dot-2 {
+    top: 20%;
+    right: 20%;
+    opacity: 1;
+}
+.dice-5 .dot-3 {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 1;
+}
+.dice-5 .dot-4 {
+    bottom: 20%;
+    left: 20%;
+    opacity: 1;
+}
+.dice-5 .dot-5 {
+    bottom: 20%;
+    right: 20%;
+    opacity: 1;
+}
+
+/* 6点样式 */
+.dice-6 .dot-1 {
+    top: 15%;
+    left: 20%;
+    opacity: 1;
+}
+.dice-6 .dot-2 {
+    top: 15%;
+    right: 20%;
+    opacity: 1;
+}
+.dice-6 .dot-3 {
+    top: 50%;
+    left: 20%;
+    transform: translateY(-50%);
+    opacity: 1;
+}
+.dice-6 .dot-4 {
+    top: 50%;
+    right: 20%;
+    transform: translateY(-50%);
+    opacity: 1;
+}
+.dice-6 .dot-5 {
+    bottom: 15%;
+    left: 20%;
+    opacity: 1;
+}
+.dice-6 .dot-6 {
+    bottom: 15%;
+    right: 20%;
+    opacity: 1;
+}
+
+/* 骰子滚动动画 */
+.dice-rolling {
+    animation: rollDice 0.1s infinite;
+}
+
+@keyframes rollDice {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(5deg) scale(1.1); }
+    50% { transform: rotate(0deg) scale(1); }
+    75% { transform: rotate(-5deg) scale(1.1); }
+    100% { transform: rotate(0deg) scale(1); }
 }
 
 .status {
@@ -159,6 +301,20 @@ body {
     color: white;
     font-weight: bold;
     font-size: 8px;
+    transition: z-index 0.1s ease;
+}
+
+/* 当前玩家的棋子应该显示在最上层 */
+.player-piece.current-player {
+    z-index: 20;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* 鼠标悬停时提高z-index，确保可以点击到被覆盖的棋子 */
+.player-piece:hover {
+    z-index: 30 !important;
+    transform: translate(-50%, -50%) scale(1.1);
+    transition: all 0.1s ease;
 }
 
 .player-red {
@@ -253,4 +409,40 @@ body {
     border: 3px solid #333;
     border-radius: 50%;
     box-shadow: 0 0 15px rgba(155, 89, 182, 0.7);
+}
+
+/* 回家路径样式 */
+.back-home-path {
+    position: absolute;
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    opacity: 0.8; /* 比公共路径稍透明 */
+}
+
+.back-home-path-red {
+    background-color: #ff4444;
+    border: 2px solid #8b0000;
+}
+
+.back-home-path-green {
+    background-color: #4caf50;
+    border: 2px solid #006400;
+}
+
+.back-home-path-blue {
+    background-color: #2196f3;
+    border: 2px solid #00008b;
+}
+
+.back-home-path-yellow {
+    background-color: #ffd700;
+    border: 2px solid #d4af37;
+}
+
+/* 掷骰子按钮禁用状态样式 */
+#roll-dice[disabled] {
+    background-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.7;
 }

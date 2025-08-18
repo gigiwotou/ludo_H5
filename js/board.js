@@ -117,22 +117,19 @@ class Board {
             [null, null, null, null, null, null, 1, 1, 0, null, null, null, null, null, null],
             [null, null, null, null, null, null, 0, 0, 0, null, null, null, null, null, null],
         ];
-
-        // 定义每个玩家的起始点和路径顺序
-        const startPositions = {
-            yellow: { x: 13, y: 8 },  // 黄色起点
-            red: { x: 6, y: 1 },      // 红色起点
-            green: { x: 1, y: 8 },    // 绿色起点
-            blue: { x: 8, y: 13 }     // 蓝色起点
-        };
-
+        
         // 定义路径顺序（顺时针）
-        this.pathOrder = {
-            yellow: this.generatePath('yellow', startPositions.yellow),
-            blue: this.generatePath('blue', startPositions.blue),
-            green: this.generatePath('green', startPositions.green),
-            red: this.generatePath('red', startPositions.red)
-        };
+        this.fullCommonPath = [
+            { x: 6, y: 0 }, { x: 7, y: 0 }, { x: 8, y: 0 },
+            { x: 8, y: 1 }, { x: 8, y: 2 }, { x: 8, y: 3 }, { x: 8, y: 4 }, { x: 8, y: 5 },
+            { x: 9, y: 6 }, { x: 10, y: 6 }, { x: 11, y: 6 }, { x: 12, y: 6 }, { x: 13, y: 6 }, { x: 14, y: 6 },
+            { x: 14, y: 7 }, { x: 14, y: 8 }, { x: 13, y: 8 }, { x: 12, y: 8 }, { x: 11, y: 8 }, { x: 10, y: 8 }, { x: 9, y: 8 },
+            { x: 8, y: 9 }, { x: 8, y: 10 }, { x: 8, y: 11 }, { x: 8, y: 12 }, { x: 8, y: 13 }, { x: 8, y: 14 },
+            { x: 7, y: 14 }, { x: 6, y: 14 }, { x: 6, y: 13 }, { x: 6, y: 12 }, { x: 6, y: 11 }, { x: 6, y: 10 }, { x: 6, y: 9 },
+            { x: 5, y: 8 }, { x: 4, y: 8 }, { x: 3, y: 8 }, { x: 2, y: 8 }, { x: 1, y: 8 }, { x: 0, y: 8 },
+            { x: 0, y: 7 }, { x: 0, y: 6 }, { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 },
+            { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 1 }
+        ];
 
         // 将格子映射为像素点
         const cellW = this.width / 15;
@@ -140,23 +137,23 @@ class Board {
         this.pathPositions = [];
         let pathOrder = []; // 路径顺序（用于玩家移动）
 
-        // 生成路径点
-        for (let y = 0; y < 15; y++) {
-            for (let x = 0; x < 15; x++) {
-                const type = grid[y][x];
-                if (type !== null) {
-                    this.pathPositions.push({
-                        x: x * cellW + cellW / 2,
-                        y: y * cellH + cellH / 2,
-                        type
-                    });
-                    // 记录路径顺序（只记录公共路线和各自回家路线的顺序，具体顺序需根据规则调整）
-                    if (type === 0 || type === 1 || type === 2 || type === 3 || type === 4) {
-                        pathOrder.push({ x, y, type });
-                    }
-                }
+        // 使用fullCommonPath数组生成路径点
+        this.fullCommonPath.forEach((point, index) => {
+            const x = point.x;
+            const y = point.y;
+            const type = grid[y][x]; // 从grid中获取类型
+            
+            if (type !== null) {
+                this.pathPositions.push({
+                    x: x * cellW + cellW / 2,
+                    y: y * cellH + cellH / 2,
+                    type
+                });
+                
+                // 记录路径顺序
+                pathOrder.push({ x, y, type });
             }
-        }
+        });
 
         // 修改路径点样式
         this.pathPositions.forEach((pos, idx) => {
@@ -166,6 +163,13 @@ class Board {
             pathElement.style.height = `${cellH * 0.9}px`;
             pathElement.style.left = `${pos.x - cellW * 0.45}px`;
             pathElement.style.top = `${pos.y - cellH * 0.45}px`;
+            pathElement.style.position = 'absolute';
+            pathElement.style.display = 'flex';
+            pathElement.style.justifyContent = 'center';
+            pathElement.style.alignItems = 'center';
+            pathElement.style.fontSize = '10px';
+            pathElement.style.color = 'white';
+            pathElement.style.zIndex = '10';
 
             // 按类型添加不同颜色样式
             switch (pos.type) {
@@ -186,99 +190,106 @@ class Board {
                     break;
             }
 
+            // 获取当前路径点对应的grid数组中的行和列索引
+            const gridPos = pathOrder[idx];
+            const gridRow = gridPos.y; // 行索引
+            const gridCol = gridPos.x; // 列索引
+            
+            // 添加显示行和列数字的文本节点
+            const gridText = document.createElement('span');
+            gridText.textContent = `(${gridCol},${gridRow})`;
+            gridText.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)';
+            pathElement.appendChild(gridText);
+
             this.boardElement.appendChild(pathElement);
         });
 
-        // 可根据 pathOrder 设置玩家起点星星等
-        // this.addStartPositionStars(pathOrder); // 你可根据新顺序调整此方法
-    }
+        this.redBackHomePath = [{x: 0, y: 7}, {x: 1, y: 7}, {x: 2, y: 7}, {x: 3, y: 7}, {x: 4, y: 7}, {x: 5, y: 7}];
+        this.greenBackHomePath = [{x: 7, y: 0}, {x: 7, y: 1}, {x: 7, y: 2}, {x: 7, y: 3}, {x: 7, y: 4}, {x: 7, y: 5}];
+        this.blueBackHomePath = [{x: 14, y: 7}, {x: 13, y: 7}, {x: 12, y: 7}, {x: 11, y: 7}, {x: 10, y: 7}, {x: 9, y: 7}];
+        this.yellowBackHomePath = [{x: 7, y: 14}, {x: 7, y: 13}, {x: 7, y: 12}, {x: 7, y: 11}, {x: 7, y: 10}, {x: 7, y: 9}];
 
-    // 方法：生成玩家路径
-    generatePath(color, start) {
-        const path = [];
-        const commonPath = [];
-        const homePath = [];
+        // 初始化回家路径位置对象
+        this.backHomePathPositions = {};
 
-        // 定义完整的公用移动路线
-        const fullCommonPath = [
-            { x: 0, y: 6 }, { x: 0, y: 7 }, { x: 0, y: 8 },
-            { x: 1, y: 8 }, { x: 2, y: 8 }, { x: 3, y: 8 }, { x: 4, y: 8 }, { x: 5, y: 8 },
-            { x: 6, y: 9 }, { x: 6, y: 10 }, { x: 6, y: 11 }, { x: 6, y: 12 }, { x: 6, y: 13 }, { x: 6, y: 14 },
-            { x: 7, y: 14 }, { x: 8, y: 14 }, { x: 8, y: 13 }, { x: 8, y: 12 }, { x: 8, y: 11 }, { x: 8, y: 10 }, { x: 8, y: 9 },
-            { x: 9, y: 8 }, { x: 10, y: 8 }, { x: 11, y: 8 }, { x: 12, y: 8 }, { x: 13, y: 8 }, { x: 14, y: 8 },
-            { x: 14, y: 7 }, { x: 14, y: 6 }, { x: 13, y: 6 }, { x: 12, y: 6 }, { x: 11, y: 6 }, { x: 10, y: 6 }, { x: 9, y: 6 },
-            { x: 8, y: 5 }, { x: 8, y: 4 }, { x: 8, y: 3 }, { x: 8, y: 2 }, { x: 8, y: 1 }, { x: 8, y: 0 },
-            { x: 7, y: 0 }, { x: 6, y: 0 }, { x: 6, y: 1 }, { x: 6, y: 2 }, { x: 6, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 5 },
-            { x: 5, y: 6 }, { x: 4, y: 6 }, { x: 3, y: 6 }, { x: 2, y: 6 }, { x: 1, y: 6 }
-        ];
+        // 定义各颜色回家路径的类型
+        const backHomePathTypes = {
+            'red': 2,
+            'green': 3,
+            'blue': 4,
+            'yellow': 1
+        };
 
-        switch (color) {
-            case 'yellow':
-                // 黄色起点(13,8)，找到在公共路径中的索引
-                const yellowStartIndex = fullCommonPath.findIndex(point => point.x === start.x && point.y === start.y);
-                // 从起点开始的公共路径
-                if (yellowStartIndex !== -1) {
-                    commonPath.push(...fullCommonPath.slice(yellowStartIndex));
-                    // 添加完整公共路径剩余部分
-                    commonPath.push(...fullCommonPath.slice(0, yellowStartIndex));
+        // 生成并绘制四个回家路径
+        const pathColors = ['red', 'green', 'blue', 'yellow'];
+        const colorNames = {'red': '红色', 'green': '绿色', 'blue': '蓝色', 'yellow': '黄色'};
+
+        pathColors.forEach(color => {
+            const path = this[`${color}BackHomePath`];
+            const pathType = backHomePathTypes[color];
+            this.backHomePathPositions[color] = [];
+
+            path.forEach((point, index) => {
+                const x = point.x;
+                const y = point.y;
+                const type = grid[y][x] || pathType;
+
+                // 计算像素位置
+                const pixelX = x * cellW + cellW / 2;
+                const pixelY = y * cellH + cellH / 2;
+
+                // 保存回家路径位置
+                this.backHomePathPositions[color].push({
+                    x: pixelX,
+                    y: pixelY,
+                    type
+                });
+
+                // 创建回家路径点元素
+                const backHomeElement = document.createElement('div');
+                backHomeElement.className = 'back-home-path';
+                backHomeElement.style.width = `${cellW * 0.9}px`;
+                backHomeElement.style.height = `${cellH * 0.9}px`;
+                backHomeElement.style.left = `${pixelX - cellW * 0.45}px`;
+                backHomeElement.style.top = `${pixelY - cellH * 0.45}px`;
+                backHomeElement.style.position = 'absolute';
+                backHomeElement.style.display = 'flex';
+                backHomeElement.style.justifyContent = 'center';
+                backHomeElement.style.alignItems = 'center';
+                backHomeElement.style.fontSize = '10px';
+                backHomeElement.style.color = 'white';
+                backHomeElement.style.zIndex = '5'; // 比公共路径低一些
+
+                // 按类型添加不同颜色样式（与公共路径保持一致）
+                switch (type) {
+                    case 1:
+                        backHomeElement.classList.add('path-yellow');
+                        break;
+                    case 2:
+                        backHomeElement.classList.add('path-red');
+                        break;
+                    case 3:
+                        backHomeElement.classList.add('path-green');
+                        break;
+                    case 4:
+                        backHomeElement.classList.add('path-blue');
+                        break;
+                    default:
+                        backHomeElement.classList.add('path-common');
+                        break;
                 }
 
-                // 回家路径 (黄色)
-                for (let y = 12; y >= 8; y--) homePath.push({ x: 6, y, type: 1 });
-                break;
+                // 添加显示行和列数字的文本节点（与公共路径保持一致）
+                const gridText = document.createElement('span');
+                gridText.textContent = `(${x},${y})`;
+                gridText.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)';
+                backHomeElement.appendChild(gridText);
 
-            case 'red':
-                // 红色起点(6,1)，找到在公共路径中的索引
-                const redStartIndex = fullCommonPath.findIndex(point => point.x === start.x && point.y === start.y);
-                // 从起点开始的公共路径
-                if (redStartIndex !== -1) {
-                    commonPath.push(...fullCommonPath.slice(redStartIndex));
-                    // 添加完整公共路径剩余部分
-                    commonPath.push(...fullCommonPath.slice(0, redStartIndex));
-                }
+                this.boardElement.appendChild(backHomeElement);
+            });
+        });
 
-                // 回家路径 (红色)
-                for (let x = 1; x <= 5; x++) homePath.push({ x, y: 6, type: 2 });
-                break;
-
-            case 'green':
-                // 绿色起点(1,8)，找到在公共路径中的索引
-                const greenStartIndex = fullCommonPath.findIndex(point => point.x === start.x && point.y === start.y);
-                // 从起点开始的公共路径
-                if (greenStartIndex !== -1) {
-                    commonPath.push(...fullCommonPath.slice(greenStartIndex));
-                    // 添加完整公共路径剩余部分
-                    commonPath.push(...fullCommonPath.slice(0, greenStartIndex));
-                }
-
-                // 回家路径 (绿色)
-                for (let x = 13; x >= 9; x--) homePath.push({ x, y: 6, type: 3 });
-                break;
-
-            case 'blue':
-                // 蓝色起点(8,13)，找到在公共路径中的索引
-                const blueStartIndex = fullCommonPath.findIndex(point => point.x === start.x && point.y === start.y);
-                // 从起点开始的公共路径
-                if (blueStartIndex !== -1) {
-                    commonPath.push(...fullCommonPath.slice(blueStartIndex));
-                    // 添加完整公共路径剩余部分
-                    commonPath.push(...fullCommonPath.slice(0, blueStartIndex));
-                }
-
-                // 回家路径 (蓝色)
-                for (let y = 1; y <= 5; y++) homePath.push({ x: 8, y, type: 4 });
-                break;
-
-            default:
-                console.error('Unknown color:', color);
-                return path;
-        }
-
-        // 合并公共路径和回家路径
-        path.push(...commonPath);
-        path.push(...homePath);
-
-        return path;
+        
     }
 
     addStartPositionStars() {
@@ -299,7 +310,14 @@ class Board {
             star.style.top = `${pos.y - (this.height * 0.01)}px`; // 星星高度的一半
             this.boardElement.appendChild(star);
         });
+    }
 
+    // 获取回家路径位置
+    getBackHomePosition(color, index) {
+        if (this.backHomePathPositions[color] && this.backHomePathPositions[color][index]) {
+            return this.backHomePathPositions[color][index];
+        }
+        return null;
     }
 
     getHomePosition(color, index) {
