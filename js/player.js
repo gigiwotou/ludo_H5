@@ -3,19 +3,7 @@ class Player {
         this.color = color;
         this.board = board;
         this.pieces = [];
-        this.startIndex = this.getStartIndex();
         this.createPieces();
-    }
-
-    getStartIndex() {
-        // 根据颜色确定起始路径索引（与board.js中的startIndices对象保持一致）
-        switch(this.color) {
-            case 'red': return 42;    // 红色起点对应的路径索引（与board.js中startIndices.red保持一致）
-            case 'green': return 3; // 绿色起点对应的路径索引（与board.js中startIndices.green保持一致）
-            case 'blue': return 16;  // 蓝色起点对应的路径索引（与board.js中startIndices.blue保持一致）
-            case 'yellow': return 29; // 黄色起点对应的路径索引（与board.js中startIndices.yellow保持一致）
-            default: return 0;
-        }
     }
 
     createPieces() {
@@ -56,53 +44,11 @@ class Player {
             const currentIndex = parseInt(piece.dataset.pathIndex);
             const newIndex = currentIndex + steps;
             
-            // 实现路径数组首尾相连，使用模运算计算实际索引
-            const pathLength = this.board.pathPositions.length;
-            const actualNewIndex = ((newIndex % pathLength) + pathLength) % pathLength; // 确保是正数
+            // 获取对应颜色的完整路径数组
+            const fullPath = this.board.getPlayerFullPath(this.color);
             
-            // 检查是否到达或超过回家路径起点
-            const backHomeStartIndex = this.getBackHomeStartIndex();
-            if (backHomeStartIndex !== -1) {
-                // 检查是否经过回家路径起点
-                // 注意：现在需要考虑循环情况
-                let passesBackHomeStart = false;
-                if (newIndex >= currentIndex) {
-                    // 正向移动
-                    passesBackHomeStart = currentIndex < backHomeStartIndex && newIndex >= backHomeStartIndex;
-                } else {
-                    // 反向移动（循环情况下）
-                    passesBackHomeStart = (currentIndex < pathLength && newIndex >= 0) && 
-                                         (currentIndex > backHomeStartIndex || newIndex < backHomeStartIndex);
-                }
-                
-                if (passesBackHomeStart) {
-                    // 只要经过回家路径起点，就可以移动
-                    return true;
-                }
-            }
-            
-            // 检查目标位置是否有其他玩家的棋子
-            // 注意：同一玩家的多个棋子可以在同一格子
-            const allPieces = document.querySelectorAll('.player-piece');
-            for (let i = 0; i < allPieces.length; i++) {
-                const otherPiece = allPieces[i];
-                // 跳过当前棋子和同一玩家的其他棋子
-                if (otherPiece === piece || otherPiece.classList[1].split('-')[1] === this.color) {
-                    continue;
-                }
-                
-                // 检查其他玩家的棋子是否在目标位置
-                if (otherPiece.dataset.position === 'path' && parseInt(otherPiece.dataset.pathIndex) === actualNewIndex) {
-                    // 目标位置被其他玩家的棋子占用，不能移动
-                    return false;
-                }
-            }
-            
-            return true;
-        }
-
-        // 如果棋子在回家路径上，总是可以移动（因为回家路径移动不会有冲突）
-        if (position === 'back-home') {
+            // 只检查移动是否有效，允许移动到有其他玩家棋子的位置
+            // 碰撞检测和将其他棋子送回营地的逻辑在movePiece完成后执行
             return true;
         }
 
@@ -132,8 +78,8 @@ class Player {
         // 从家区域移动到路径起点
         if (position === 'home') {
             piece.dataset.position = 'path';
-            piece.dataset.pathIndex = this.startIndex;
-            const pathPos = this.board.getPathPosition(this.startIndex);
+            piece.dataset.pathIndex = 0;
+            const pathPos = this.board.getPathPosition(this.color, 0);
             this.animatePieceMovement(piece, parseFloat(piece.style.left), parseFloat(piece.style.top), pathPos.x, pathPos.y, 300);
             return true;
         }
@@ -143,178 +89,95 @@ class Player {
             const currentIndex = parseInt(piece.dataset.pathIndex);
             const newIndex = currentIndex + steps;
 
-            // 实现路径数组首尾相连，使用模运算计算实际索引
-            const pathLength = this.board.pathPositions.length;
-            const actualNewIndex = ((newIndex % pathLength) + pathLength) % pathLength; // 确保是正数
-
-            // 检查是否到达或超过回家路径起点
-            const backHomeStartIndex = this.getBackHomeStartIndex();
-            let needsToGoBackHome = false;
-            let stepsToBackHomeStart = 0;
-            let remainingSteps = 0;
+            // 获取对应颜色的完整路径数组
+            const fullPath = this.board.getPlayerFullPath(this.color);
             
-            if (backHomeStartIndex !== -1) {
-                // 检查是否经过回家路径起点
-                // 注意：现在需要考虑循环情况
-                if (newIndex >= currentIndex) {
-                    // 正向移动
-                    needsToGoBackHome = currentIndex < backHomeStartIndex && newIndex >= backHomeStartIndex;
-                    if (needsToGoBackHome) {
-                        stepsToBackHomeStart = backHomeStartIndex - currentIndex;
-                        remainingSteps = steps - stepsToBackHomeStart;
-                    }
-                } else {
-                    // 反向移动（循环情况下）
-                    needsToGoBackHome = (currentIndex < pathLength && newIndex >= 0) && 
-                                       (currentIndex > backHomeStartIndex || newIndex < backHomeStartIndex);
-                    if (needsToGoBackHome) {
-                        // 计算从当前位置到路径末尾的步数，再加上从路径开始到回家起点的步数
-                        stepsToBackHomeStart = (pathLength - currentIndex) + backHomeStartIndex;
-                        remainingSteps = steps - stepsToBackHomeStart;
-                    }
-                }
-                
-                if (needsToGoBackHome) {
-                    // 先动画移动到回家路径起点
-                    this.animatePathMovement(piece, currentIndex, backHomeStartIndex, stepsToBackHomeStart);
-                    
-                    // 更新棋子数据
-                    piece.dataset.pathIndex = backHomeStartIndex;
-                    
-                    // 使用setTimeout确保动画完成后再移动到回家路径
-                    // 每个格子的动画持续时间为200毫秒
-                    setTimeout(() => {
-                        // 然后在回家路径上移动剩余步数
-                        this.moveOnBackHomePath(piece, remainingSteps);
-                    }, 200 * stepsToBackHomeStart);
-                    return true;
-                }
+            // 检查是否到达路径终点或超出范围
+            if (newIndex >= fullPath.length) {
+                // 直接移动到中心区域
+                this.moveToCenter(piece);
+            } else {
+                // 直接移动到目标索引位置
+                this.animatePathMovement(piece, currentIndex, newIndex, steps);
+                piece.dataset.pathIndex = newIndex;
             }
-            
-            // 直接移动到目标索引位置（循环处理）
-            this.animatePathMovement(piece, currentIndex, newIndex, steps);
-            piece.dataset.pathIndex = actualNewIndex;
-            return true;
-        }
-
-        // 在回家路径上移动
-        if (position === 'back-home') {
-            const currentBackHomeIndex = parseInt(piece.dataset.backHomeIndex) || 0;
-            this.moveOnBackHomePath(piece, steps, currentBackHomeIndex);
-            return true;
-        }
-
-        // 在终点区域移动
-        if (position === 'finish') {
-            const currentIndex = parseInt(piece.dataset.finishIndex);
-            const newIndex = currentIndex + steps;
-
-            // 检查是否超出终点区域
-            if (newIndex >= this.board.finishPositions.length) {
-                return false;
-            }
-
-            piece.dataset.finishIndex = newIndex;
-            const finishPos = this.board.getFinishPosition(newIndex);
-            const currentPos = {
-                x: parseFloat(piece.style.left),
-                y: parseFloat(piece.style.top)
-            };
-            this.animatePieceMovement(piece, currentPos.x, currentPos.y, finishPos.x, finishPos.y, 300);
             return true;
         }
 
         return false;
     }
 
-    // 获取回家路径起点在公共路径中的索引
-    getBackHomeStartIndex() {
-        // 根据颜色确定回家路径起点在公共路径中的索引
-        // 这些位置是根据board.js中的fullCommonPath数组确定的
-        switch(this.color) {
-            case 'red': return 40; // 红色回家路径起点对应公共路径索引，坐标{x: 0, y: 7}
-            case 'green': return 1;  // 绿色回家路径起点对应公共路径索引，坐标{x: 7, y: 0}
-            case 'blue': return 14; // 蓝色回家路径起点对应公共路径索引，坐标{x: 14, y: 7}
-            case 'yellow': return 27; // 黄色回家路径起点对应公共路径索引，坐标{x: 7, y: 14}
-            default: return -1;
-        }
-    }
 
-    // 在回家路径上移动棋子
-    moveOnBackHomePath(piece, steps, currentBackHomeIndex = 0) {
-        // 将棋子位置标记为回家路径
-        piece.dataset.position = 'back-home';
-        
-        // 如果步数为0，只移动到回家路径起点
-        if (steps <= 0) {
-            // 从路径起点移动到回家路径起点
-            const startPos = this.board.getBackHomePosition(this.color, currentBackHomeIndex);
-            if (startPos) {
-                piece.dataset.backHomeIndex = currentBackHomeIndex;
-                this.animatePieceMovement(piece, parseFloat(piece.style.left), parseFloat(piece.style.top), startPos.x, startPos.y, 300);
-            }
-            return;
-        }
-        
-        // 获取回家路径长度
-        const backHomePathLength = 6; // 每个回家路径有6个点
-        
-        // 计算目标索引
-        const targetIndex = currentBackHomeIndex + steps;
-        
-        // 检查是否超过回家路径长度
-        if (targetIndex >= backHomePathLength) {
-            // 步数超过回家路径长度，移动到中心区域
-            this.moveToCenter(piece);
-        } else {
-            // 在回家路径上移动剩余步数
-            const targetPos = this.board.getBackHomePosition(this.color, targetIndex);
-            
-            if (targetPos) {
-                // 动画移动棋子经过回家路径上的每个点
-                const animationDuration = 300; // 每个点的动画持续时间（毫秒）
-                let currentIndex = currentBackHomeIndex;
-                let currentX = parseFloat(piece.style.left);
-                let currentY = parseFloat(piece.style.top);
-                
-                const moveStepByStep = () => {
-                    if (currentIndex < targetIndex) {
-                        currentIndex++;
-                        const nextPos = this.board.getBackHomePosition(this.color, currentIndex);
-                        
-                        if (nextPos) {
-                            piece.dataset.backHomeIndex = currentIndex;
-                            this.animatePieceMovement(piece, currentX, currentY, nextPos.x, nextPos.y, animationDuration);
-                            currentX = nextPos.x;
-                            currentY = nextPos.y;
-                            
-                            setTimeout(moveStepByStep, animationDuration);
-                        }
-                    }
-                };
-                
-                moveStepByStep();
-            }
-        }
-    }
 
-    // 将棋子移动到中心区域
+    // 将棋子移动到中心区域（对应颜色的三角形内）
     moveToCenter(piece) {
         // 将棋子位置标记为终点
         piece.dataset.position = 'finish';
-        piece.dataset.finishIndex = 0;
         
-        // 中心区域位置 - 大致位于棋盘中心
+        // 获取当前颜色
+        const color = this.color;
+        
+        // 获取所有已在终点区域的同色棋子数量
+        const finishPieces = document.querySelectorAll(`.player-piece.player-${color}[data-position="finish"]`);
+        const pieceCount = finishPieces.length;
+        
+        // 标记棋子在终点区域的索引（0-3）
+        piece.dataset.finishIndex = pieceCount % 4;
+        
+        // 计算棋盘中心位置
         const centerX = this.board.width / 2;
         const centerY = this.board.height / 2;
         
-        this.animatePieceMovement(piece, parseFloat(piece.style.left), parseFloat(piece.style.top), centerX, centerY, 500);
+        // 终点区域大小和棋子间距
+        const finishAreaSize = this.board.width * 0.2; // 终点区域占棋盘宽度的20%
+        const pieceSize = finishAreaSize * 0.2; // 棋子大小
+        const gap = finishAreaSize * 0.1; // 棋子间距
+        
+        // 根据颜色确定三角形区域的基准位置
+        let baseX = centerX;
+        let baseY = centerY;
+        
+        // 根据颜色调整棋子在对应三角形内的位置
+        // 2行2列排列：[0,1]第一行，[2,3]第二行
+        const row = Math.floor(pieceCount % 4 / 2);
+        const col = pieceCount % 2;
+        
+        let targetX, targetY;
+        
+        switch(color) {
+            case 'red': // 红色三角形 - 直角在中心，长边向左
+                // 红色三角形内的位置计算
+                targetX = centerX - (finishAreaSize * 0.25) + (col * (pieceSize + gap));
+                targetY = centerY - (finishAreaSize * 0.1) + (row * (pieceSize + gap));
+                break;
+            case 'green': // 绿色三角形 - 直角在中心，长边朝上
+                // 绿色三角形内的位置计算
+                targetX = centerX - (finishAreaSize * 0.1) + (col * (pieceSize + gap));
+                targetY = centerY - (finishAreaSize * 0.25) + (row * (pieceSize + gap));
+                break;
+            case 'blue': // 蓝色三角形 - 直角在中心，长边向右
+                // 蓝色三角形内的位置计算
+                targetX = centerX + (finishAreaSize * 0.05) + (col * (pieceSize + gap));
+                targetY = centerY - (finishAreaSize * 0.1) + (row * (pieceSize + gap));
+                break;
+            case 'yellow': // 黄色三角形 - 直角在中心，长边向下
+                // 黄色三角形内的位置计算
+                targetX = centerX - (finishAreaSize * 0.1) + (col * (pieceSize + gap));
+                targetY = centerY + (finishAreaSize * 0.05) + (row * (pieceSize + gap));
+                break;
+            default:
+                targetX = centerX;
+                targetY = centerY;
+        }
+        
+        // 动画移动到目标位置
+        this.animatePieceMovement(piece, parseFloat(piece.style.left), parseFloat(piece.style.top), targetX, targetY, 500);
     }
 
     // 动画移动棋子经过路径上的每个格子
     animatePathMovement(piece, startIndex, endIndex, totalSteps) {
-        // 获取路径长度
-        const pathLength = this.board.pathPositions.length;
+        // 获取对应颜色的完整路径数组
+        const fullPath = this.board.getPlayerFullPath(this.color);
         
         // 计算实际移动的方向和总步数
         let stepDirection = Math.sign(endIndex - startIndex);
@@ -333,9 +196,17 @@ class Player {
                 return;
             }
 
-            // 计算下一个格子的索引，支持循环
-            const nextIndex = ((startIndex + (currentStep + 1) * stepDirection) % pathLength + pathLength) % pathLength;
-            const nextPos = this.board.getPathPosition(nextIndex);
+            // 计算下一个格子的索引，不支持循环
+            const nextIndex = startIndex + (currentStep + 1) * stepDirection;
+            
+            // 检查是否超出路径范围
+            if (nextIndex >= fullPath.length) {
+                // 移动到中心区域
+                this.moveToCenter(piece);
+                return;
+            }
+            
+            const nextPos = this.board.getPathPosition(this.color, nextIndex);
 
             // 更新棋子数据
             piece.dataset.pathIndex = nextIndex;
@@ -362,8 +233,12 @@ class Player {
             return;
         }
         
-        const currentPathIndex = parseInt(currentPiece.dataset.pathIndex);
         const currentPlayerColor = this.color;
+        const currentPathIndex = parseInt(currentPiece.dataset.pathIndex);
+        
+        // 获取当前棋子的实际像素坐标
+        const currentPos = this.board.getPathPosition(currentPlayerColor, currentPathIndex);
+        if (!currentPos) return;
         
         // 获取所有棋子
         const allPieces = document.querySelectorAll('.player-piece');
@@ -374,14 +249,30 @@ class Player {
                 return;
             }
             
-            // 检查是否是其他玩家在路径上的棋子，并且在同一位置
-            if (piece.dataset.position === 'path' && parseInt(piece.dataset.pathIndex) === currentPathIndex) {
-                // 获取该棋子的玩家颜色和索引
-                const pieceColor = piece.classList[1].split('-')[1];
-                const pieceIndex = parseInt(piece.dataset.index);
+            // 检查是否是其他玩家在路径上的棋子
+            if (piece.dataset.position === 'path') {
+                const otherPieceColor = piece.classList[1].split('-')[1];
+                const otherPathIndex = parseInt(piece.dataset.pathIndex);
                 
-                // 将棋子送回营地
-                this.sendPieceBackHome(piece, pieceColor, pieceIndex);
+                // 获取其他棋子的实际像素坐标
+                const otherPos = this.board.getPathPosition(otherPieceColor, otherPathIndex);
+                if (!otherPos) return;
+                
+                // 计算两个坐标之间的距离，判断是否在同一格子（考虑浮点精度误差）
+                const distance = Math.sqrt(
+                    Math.pow(currentPos.x - otherPos.x, 2) + 
+                    Math.pow(currentPos.y - otherPos.y, 2)
+                );
+                
+                // 如果距离非常小（小于一个阈值），则认为在同一格子
+                const collisionThreshold = 5; // 碰撞检测阈值（像素）
+                if (distance < collisionThreshold) {
+                    // 获取该棋子的玩家颜色和索引
+                    const pieceIndex = parseInt(piece.dataset.index);
+                    
+                    // 将棋子送回营地
+                    this.sendPieceBackHome(piece, otherPieceColor, pieceIndex);
+                }
             }
         });
     }

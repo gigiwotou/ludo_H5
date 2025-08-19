@@ -397,7 +397,7 @@ body {
     transform: translate(-50%, -50%);
 }
 
-/* 终点区域样式 */
+/* 终点区域样式 - 由4个等边直角三角形组成的正方形 */
 .finish-area {
     width: 20%;
     height: 20%;
@@ -405,10 +405,46 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: #9b59b6;
     border: 3px solid #333;
-    border-radius: 50%;
-    box-shadow: 0 0 15px rgba(155, 89, 182, 0.7);
+    background-color: transparent;
+    overflow: hidden;
+}
+
+/* 创建四个三角形div */
+.finish-triangle {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+/* 红色终点区域 - 直角在中心，长边向左 */
+.finish-triangle-red {
+    clip-path: polygon(50% 50%, 0 0, 0 100%);
+    background-color: #ff4444;
+    z-index: 1;
+}
+
+/* 绿色终点区域 - 直角在中心，长边朝上 */
+.finish-triangle-green {
+    clip-path: polygon(50% 50%, 0 0, 100% 0);
+    background-color: #4caf50;
+    z-index: 2;
+}
+
+/* 蓝色终点区域 - 直角在中心，长边向右 */
+.finish-triangle-blue {
+    clip-path: polygon(50% 50%, 100% 0, 100% 100%);
+    background-color: #2196f3;
+    z-index: 3;
+}
+
+/* 黄色终点区域 - 直角在中心，长边向下 */
+.finish-triangle-yellow {
+    clip-path: polygon(50% 50%, 0 100%, 100% 100%);
+    background-color: #ffd700;
+    z-index: 4;
 }
 
 /* 回家路径样式 */

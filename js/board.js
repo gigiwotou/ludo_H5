@@ -81,6 +81,14 @@ class Board {
         finishArea.className = 'finish-area';
         this.boardElement.appendChild(finishArea);
 
+        // 创建四个等边直角三角形，每个对应一个颜色的终点区域
+        const colors = ['red', 'green', 'blue', 'yellow'];
+        colors.forEach(color => {
+            const triangle = document.createElement('div');
+            triangle.className = `finish-triangle finish-triangle-${color}`;
+            finishArea.appendChild(triangle);
+        });
+
         const rect = finishArea.getBoundingClientRect();
         const boardRect = this.boardElement.getBoundingClientRect();
 
@@ -118,8 +126,12 @@ class Board {
             [null, null, null, null, null, null, 0, 0, 0, null, null, null, null, null, null],
         ];
         
-        // 定义路径顺序（顺时针）
-        this.fullCommonPath = [
+    
+
+        // 每个玩家的完整路径 - 从各自的起点开始的完整路径
+        this.redFullCommonPath = [
+            { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 },
+            { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 1 },
             { x: 6, y: 0 }, { x: 7, y: 0 }, { x: 8, y: 0 },
             { x: 8, y: 1 }, { x: 8, y: 2 }, { x: 8, y: 3 }, { x: 8, y: 4 }, { x: 8, y: 5 },
             { x: 9, y: 6 }, { x: 10, y: 6 }, { x: 11, y: 6 }, { x: 12, y: 6 }, { x: 13, y: 6 }, { x: 14, y: 6 },
@@ -127,8 +139,45 @@ class Board {
             { x: 8, y: 9 }, { x: 8, y: 10 }, { x: 8, y: 11 }, { x: 8, y: 12 }, { x: 8, y: 13 }, { x: 8, y: 14 },
             { x: 7, y: 14 }, { x: 6, y: 14 }, { x: 6, y: 13 }, { x: 6, y: 12 }, { x: 6, y: 11 }, { x: 6, y: 10 }, { x: 6, y: 9 },
             { x: 5, y: 8 }, { x: 4, y: 8 }, { x: 3, y: 8 }, { x: 2, y: 8 }, { x: 1, y: 8 }, { x: 0, y: 8 },
+            { x: 0, y: 7 }, {x: 1, y: 7}, {x: 2, y: 7}, {x: 3, y: 7}, {x: 4, y: 7}, {x: 5, y: 7}
+        ];
+
+        this.greenFullCommonPath = [            
+            { x: 8, y: 1 }, { x: 8, y: 2 }, { x: 8, y: 3 }, { x: 8, y: 4 }, { x: 8, y: 5 },
+            { x: 9, y: 6 }, { x: 10, y: 6 }, { x: 11, y: 6 }, { x: 12, y: 6 }, { x: 13, y: 6 }, { x: 14, y: 6 },
+            { x: 14, y: 7 }, { x: 14, y: 8 }, { x: 13, y: 8 }, { x: 12, y: 8 }, { x: 11, y: 8 }, { x: 10, y: 8 }, { x: 9, y: 8 },
+            { x: 8, y: 9 }, { x: 8, y: 10 }, { x: 8, y: 11 }, { x: 8, y: 12 }, { x: 8, y: 13 }, { x: 8, y: 14 },
+            { x: 7, y: 14 }, { x: 6, y: 14 }, { x: 6, y: 13 }, { x: 6, y: 12 }, { x: 6, y: 11 }, { x: 6, y: 10 }, { x: 6, y: 9 },
+            { x: 5, y: 8 }, { x: 4, y: 8 }, { x: 3, y: 8 }, { x: 2, y: 8 }, { x: 1, y: 8 }, { x: 0, y: 8 },
             { x: 0, y: 7 }, { x: 0, y: 6 }, { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 },
-            { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 1 }
+            { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 1 },
+            { x: 6, y: 0 }, { x: 7, y: 0 }, {x: 7, y: 1}, {x: 7, y: 2}, {x: 7, y: 3}, {x: 7, y: 4}, {x: 7, y: 5}
+        ];
+
+        this.blueFullCommonPath = [
+            { x: 13, y: 8 }, { x: 12, y: 8 }, { x: 11, y: 8 }, { x: 10, y: 8 }, { x: 9, y: 8 },
+            { x: 8, y: 9 }, { x: 8, y: 10 }, { x: 8, y: 11 }, { x: 8, y: 12 }, { x: 8, y: 13 }, { x: 8, y: 14 },
+            { x: 7, y: 14 }, { x: 6, y: 14 }, { x: 6, y: 13 }, { x: 6, y: 12 }, { x: 6, y: 11 }, { x: 6, y: 10 }, { x: 6, y: 9 },
+            { x: 5, y: 8 }, { x: 4, y: 8 }, { x: 3, y: 8 }, { x: 2, y: 8 }, { x: 1, y: 8 }, { x: 0, y: 8 },
+            { x: 0, y: 7 }, { x: 0, y: 6 }, { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 },
+            { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 1 },
+            { x: 6, y: 0 }, { x: 7, y: 0 }, { x: 8, y: 0 },
+            { x: 8, y: 1 }, { x: 8, y: 2 }, { x: 8, y: 3 }, { x: 8, y: 4 }, { x: 8, y: 5 },
+            { x: 9, y: 6 }, { x: 10, y: 6 }, { x: 11, y: 6 }, { x: 12, y: 6 }, { x: 13, y: 6 }, { x: 14, y: 6 },
+            { x: 14, y: 7 }, {x: 13, y: 7}, {x: 12, y: 7}, {x: 11, y: 7}, {x: 10, y: 7}, {x: 9, y: 7}
+        ];
+
+        this.yellowFullCommonPath = [
+           { x: 6, y: 13 }, { x: 6, y: 12 }, { x: 6, y: 11 }, { x: 6, y: 10 }, { x: 6, y: 9 },
+            { x: 5, y: 8 }, { x: 4, y: 8 }, { x: 3, y: 8 }, { x: 2, y: 8 }, { x: 1, y: 8 }, { x: 0, y: 8 },
+            { x: 0, y: 7 }, { x: 0, y: 6 }, { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 },
+            { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 1 },
+            { x: 6, y: 0 }, { x: 7, y: 0 }, { x: 8, y: 0 },
+            { x: 8, y: 1 }, { x: 8, y: 2 }, { x: 8, y: 3 }, { x: 8, y: 4 }, { x: 8, y: 5 },
+            { x: 9, y: 6 }, { x: 10, y: 6 }, { x: 11, y: 6 }, { x: 12, y: 6 }, { x: 13, y: 6 }, { x: 14, y: 6 },
+            { x: 14, y: 7 }, { x: 14, y: 8 }, { x: 13, y: 8 }, { x: 12, y: 8 }, { x: 11, y: 8 }, { x: 10, y: 8 }, { x: 9, y: 8 },
+            { x: 8, y: 9 }, { x: 8, y: 10 }, { x: 8, y: 11 }, { x: 8, y: 12 }, { x: 8, y: 13 }, { x: 8, y: 14 },
+            { x: 7, y: 14 }, {x: 7, y: 13}, {x: 7, y: 12}, {x: 7, y: 11}, {x: 7, y: 10}, {x: 7, y: 9}
         ];
 
         // 将格子映射为像素点
@@ -137,23 +186,34 @@ class Board {
         this.pathPositions = [];
         let pathOrder = []; // 路径顺序（用于玩家移动）
 
-        // 使用fullCommonPath数组生成路径点
-        this.fullCommonPath.forEach((point, index) => {
-            const x = point.x;
-            const y = point.y;
-            const type = grid[y][x]; // 从grid中获取类型
-            
-            if (type !== null) {
-                this.pathPositions.push({
-                    x: x * cellW + cellW / 2,
-                    y: y * cellH + cellH / 2,
-                    type
-                });
-                
-                // 记录路径顺序
-                pathOrder.push({ x, y, type });
+        // 生成路径点
+        for (let y = 0; y < 15; y++) {
+            for (let x = 0; x < 15; x++) {
+                const type = grid[y][x];
+                if (type !== null) {
+                    this.pathPositions.push({
+                        x: x * cellW + cellW / 2,
+                        y: y * cellH + cellH / 2,
+                        type
+                    });
+                    // 记录路径顺序（只记录公共路线和各自回家路线的顺序，具体顺序需根据规则调整）
+                    if (type === 0 || type === 1 || type === 2 || type === 3 || type === 4) {
+                        pathOrder.push({ x, y, type });
+                    }
+                }
             }
-        });
+        }
+
+        // 根据玩家颜色获取对应的完整路径数组
+        this.getPlayerFullPath = function(color) {
+            switch(color) {
+                case 'red': return this.redFullCommonPath;
+                case 'green': return this.greenFullCommonPath;
+                case 'blue': return this.blueFullCommonPath;
+                case 'yellow': return this.yellowFullCommonPath;
+                default: return this.redFullCommonPath;
+            }
+        };
 
         // 修改路径点样式
         this.pathPositions.forEach((pos, idx) => {
@@ -204,90 +264,7 @@ class Board {
             this.boardElement.appendChild(pathElement);
         });
 
-        this.redBackHomePath = [{x: 0, y: 7}, {x: 1, y: 7}, {x: 2, y: 7}, {x: 3, y: 7}, {x: 4, y: 7}, {x: 5, y: 7}];
-        this.greenBackHomePath = [{x: 7, y: 0}, {x: 7, y: 1}, {x: 7, y: 2}, {x: 7, y: 3}, {x: 7, y: 4}, {x: 7, y: 5}];
-        this.blueBackHomePath = [{x: 14, y: 7}, {x: 13, y: 7}, {x: 12, y: 7}, {x: 11, y: 7}, {x: 10, y: 7}, {x: 9, y: 7}];
-        this.yellowBackHomePath = [{x: 7, y: 14}, {x: 7, y: 13}, {x: 7, y: 12}, {x: 7, y: 11}, {x: 7, y: 10}, {x: 7, y: 9}];
 
-        // 初始化回家路径位置对象
-        this.backHomePathPositions = {};
-
-        // 定义各颜色回家路径的类型
-        const backHomePathTypes = {
-            'red': 2,
-            'green': 3,
-            'blue': 4,
-            'yellow': 1
-        };
-
-        // 生成并绘制四个回家路径
-        const pathColors = ['red', 'green', 'blue', 'yellow'];
-        const colorNames = {'red': '红色', 'green': '绿色', 'blue': '蓝色', 'yellow': '黄色'};
-
-        pathColors.forEach(color => {
-            const path = this[`${color}BackHomePath`];
-            const pathType = backHomePathTypes[color];
-            this.backHomePathPositions[color] = [];
-
-            path.forEach((point, index) => {
-                const x = point.x;
-                const y = point.y;
-                const type = grid[y][x] || pathType;
-
-                // 计算像素位置
-                const pixelX = x * cellW + cellW / 2;
-                const pixelY = y * cellH + cellH / 2;
-
-                // 保存回家路径位置
-                this.backHomePathPositions[color].push({
-                    x: pixelX,
-                    y: pixelY,
-                    type
-                });
-
-                // 创建回家路径点元素
-                const backHomeElement = document.createElement('div');
-                backHomeElement.className = 'back-home-path';
-                backHomeElement.style.width = `${cellW * 0.9}px`;
-                backHomeElement.style.height = `${cellH * 0.9}px`;
-                backHomeElement.style.left = `${pixelX - cellW * 0.45}px`;
-                backHomeElement.style.top = `${pixelY - cellH * 0.45}px`;
-                backHomeElement.style.position = 'absolute';
-                backHomeElement.style.display = 'flex';
-                backHomeElement.style.justifyContent = 'center';
-                backHomeElement.style.alignItems = 'center';
-                backHomeElement.style.fontSize = '10px';
-                backHomeElement.style.color = 'white';
-                backHomeElement.style.zIndex = '5'; // 比公共路径低一些
-
-                // 按类型添加不同颜色样式（与公共路径保持一致）
-                switch (type) {
-                    case 1:
-                        backHomeElement.classList.add('path-yellow');
-                        break;
-                    case 2:
-                        backHomeElement.classList.add('path-red');
-                        break;
-                    case 3:
-                        backHomeElement.classList.add('path-green');
-                        break;
-                    case 4:
-                        backHomeElement.classList.add('path-blue');
-                        break;
-                    default:
-                        backHomeElement.classList.add('path-common');
-                        break;
-                }
-
-                // 添加显示行和列数字的文本节点（与公共路径保持一致）
-                const gridText = document.createElement('span');
-                gridText.textContent = `(${x},${y})`;
-                gridText.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)';
-                backHomeElement.appendChild(gridText);
-
-                this.boardElement.appendChild(backHomeElement);
-            });
-        });
 
         
     }
@@ -312,20 +289,51 @@ class Board {
         });
     }
 
-    // 获取回家路径位置
-    getBackHomePosition(color, index) {
-        if (this.backHomePathPositions[color] && this.backHomePathPositions[color][index]) {
-            return this.backHomePathPositions[color][index];
-        }
-        return null;
-    }
+
 
     getHomePosition(color, index) {
         return this.homePositions[color][index];
     }
 
-    getPathPosition(index) {
-        return this.pathPositions[index];
+    // 获取路径上指定索引的位置，通过颜色和index获取对应颜色棋子的路径坐标
+    getPathPosition(color, index) {
+        // 获取对应颜色的完整路径数组
+        const fullPath = this.getPlayerFullPath(color);
+        if (!fullPath || fullPath.length === 0) {
+            return null;
+        }
+        
+        // 计算实际索引（处理循环情况）
+        const actualIndex = ((index % fullPath.length) + fullPath.length) % fullPath.length;
+        
+        // 获取路径点坐标
+        const point = fullPath[actualIndex];
+        if (!point) {
+            return null;
+        }
+        
+        // 转换为像素坐标
+        const cellW = this.width / 15;
+        const cellH = this.height / 15;
+        
+        return {
+            x: point.x * cellW + cellW / 2,
+            y: point.y * cellH + cellH / 2,
+            type: 0
+        };
+    }
+
+    // 根据坐标获取路径位置
+    getPathPositionByCoordinates(x, y) {
+        // 查找fullCommonPath中匹配的坐标
+        const cellW = this.width / 15;
+        const cellH = this.height / 15;
+
+        // 计算像素位置
+        return {
+            x: x * cellW + cellW / 2,
+            y: y * cellH + cellH / 2
+        };
     }
 
     getFinishPosition(index) {
