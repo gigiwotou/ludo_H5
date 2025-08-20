@@ -70,7 +70,7 @@ class Player {
     }
 
     // 方法：移动棋子
-    movePiece(pieceIndex, steps) {
+    movePiece(pieceIndex, steps, onCenterEnteredCallback = null) {
         // 参数有效性检查
         steps = parseInt(steps);
         if (isNaN(steps) || steps <= 0 || pieceIndex < 0 || pieceIndex >= this.pieces.length) {
@@ -110,13 +110,13 @@ class Player {
                 return false;
             } else if (newIndex === pathLength) {
                 // 正好移动到路径长度的位置，先移动到路径终点，最后一步再进入中心区域
-                this.animatePathMovement(piece, currentIndex, pathLength - 1, steps);
+                this.animatePathMovement(piece, currentIndex, pathLength - 1, steps, onCenterEnteredCallback);
                 piece.dataset.pathIndex = pathLength - 1;
             } else if (newIndex >= 0 && newIndex < pathLength) {
                 // 新索引在路径范围内，移动到路径上的普通位置
                 const targetPos = this.board.getPathPosition(this.color, newIndex);
                 if (targetPos) {
-                    this.animatePathMovement(piece, currentIndex, newIndex, steps);
+                    this.animatePathMovement(piece, currentIndex, newIndex, steps, onCenterEnteredCallback);
                     piece.dataset.pathIndex = newIndex;
                 } else {
                     return false;
@@ -131,7 +131,7 @@ class Player {
 
 
     // 将棋子移动到中心区域（对应颜色的三角形内）
-    moveToCenter(piece) {
+    moveToCenter(piece, onCenterEnteredCallback = null) {
         // 将棋子位置标记为终点
         piece.dataset.position = 'finish';
         
@@ -148,6 +148,13 @@ class Player {
         
         // 动画移动到目标位置
         this.animatePieceMovement(piece, parseFloat(piece.style.left), parseFloat(piece.style.top), targetPos.x, targetPos.y, 500);
+        
+        // 棋子成功进入中心区域后，调用回调函数
+        if (typeof onCenterEnteredCallback === 'function') {
+            setTimeout(() => {
+                onCenterEnteredCallback();
+            }, 500);
+        }
     }
     
     // 计算棋子在终点区域的位置
@@ -193,7 +200,7 @@ class Player {
     }
 
     // 动画移动棋子经过路径上的每个格子
-    animatePathMovement(piece, startIndex, endIndex, totalSteps) {
+    animatePathMovement(piece, startIndex, endIndex, totalSteps, onCenterEnteredCallback = null) {
         // 参数有效性检查
         if (!piece || typeof startIndex !== 'number' || typeof endIndex !== 'number' || typeof totalSteps !== 'number') {
             return;
@@ -211,12 +218,12 @@ class Player {
         let currentX = parseFloat(piece.style.left);
         let currentY = parseFloat(piece.style.top);
 
-        // 创建动画函数
-        this.moveThroughPathSteps(piece, startIndex, endIndex, totalSteps, stepDirection, currentX, currentY, animationDuration);
+        // 创建动画函数，并传递中心区域进入回调函数
+        this.moveThroughPathSteps(piece, startIndex, endIndex, totalSteps, stepDirection, currentX, currentY, animationDuration, 0, onCenterEnteredCallback);
     }
     
     // 递归移动棋子经过每个路径步骤
-    moveThroughPathSteps(piece, startIndex, endIndex, totalSteps, stepDirection, currentX, currentY, animationDuration, currentStep = 0) {
+    moveThroughPathSteps(piece, startIndex, endIndex, totalSteps, stepDirection, currentX, currentY, animationDuration, currentStep = 0, onCenterEnteredCallback = null) {
         // 检查是否完成所有步骤
         if (currentStep >= Math.abs(totalSteps)) {
             this.checkAndSendBackOtherPieces(piece);
@@ -231,13 +238,13 @@ class Player {
             // 移动完成后继续下一个步骤
             const nextPos = this.board.getPathPosition(this.color, nextIndex);
             if (nextPos) {
-                this.moveThroughPathSteps(piece, startIndex, endIndex, totalSteps, stepDirection, nextPos.x, nextPos.y, animationDuration, currentStep + 1);
+                this.moveThroughPathSteps(piece, startIndex, endIndex, totalSteps, stepDirection, nextPos.x, nextPos.y, animationDuration, currentStep + 1, onCenterEnteredCallback);
             }
-        });
+        }, onCenterEnteredCallback);
     }
     
     // 处理下一个路径索引的移动逻辑
-    processNextPathIndex(piece, nextIndex, currentX, currentY, animationDuration, onComplete) {
+    processNextPathIndex(piece, nextIndex, currentX, currentY, animationDuration, onComplete, onCenterEnteredCallback = null) {
         const fullPath = this.board.getPlayerFullPath(this.color);
         const pathLength = fullPath.length;
         
@@ -250,13 +257,13 @@ class Player {
             
             // 动画完成后进入中心区域
             setTimeout(() => {
-                this.moveToCenter(piece);
+                this.moveToCenter(piece, onCenterEnteredCallback);
                 this.checkAndSendBackOtherPieces(piece);
                 if (onComplete) onComplete();
             }, animationDuration);
         } else if (nextIndex === pathLength + 1) {
             // 正好移动到路径长度+1的位置，进入中心区域
-            this.moveToCenter(piece);
+            this.moveToCenter(piece, onCenterEnteredCallback);
         } else if (nextIndex > pathLength) {
             // 超出路径范围，不能移动
             this.checkAndSendBackOtherPieces(piece);

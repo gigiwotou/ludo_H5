@@ -29,6 +29,10 @@ class Game {
             'blue': true     // 默认为AI控制
         };
         
+        // 新增属性：用于中心区域奖励掷骰子功能
+        this.pendingDiceResults = null;
+        this.hasPendingDiceResults = false;
+        
         this.initializeEventListeners();
         this.updateStatus();
     }
@@ -78,6 +82,13 @@ class Game {
         const rollDiceButton = document.getElementById('roll-dice');
         if (!isAiCall) {
             rollDiceButton.disabled = true;
+        }
+
+        // 如果是第一次掷骰子或在滚动阶段之外掷骰子，重置连续6点计数和骰子结果数组
+        if (!this.isRollingPhase && this.consecutiveSixCount === 0) {
+            this.consecutiveSixCount = 0;
+            this.diceResults = [];
+            this.currentDiceIndex = 0;
         }
 
         const diceElement = document.querySelector('.dice');
@@ -134,45 +145,51 @@ class Game {
         // 检查当前玩家是否由AI接管
         const isCurrentPlayerAi = this.aiControlledPlayers[this.currentPlayer.color];
         
-        // 如果是AI玩家，使用传统逻辑
-        if (isCurrentPlayerAi) {
-            // 启用/禁用骰子按钮
-            if (!isAiCall) {
-                rollDiceButton.disabled = isCurrentPlayerAi;
-            }
-            
-            setTimeout(() => this.autoMovePiece(), 1000);
-            return;
-        }
-        
         // 启用/禁用骰子按钮
         if (!isAiCall) {
-            rollDiceButton.disabled = true;
+            rollDiceButton.disabled = isCurrentPlayerAi;
         }
         
-        // 人类玩家的新逻辑
+        // 记录骰子结果（对于AI玩家和人类玩家都适用）
+        if (this.isRollingPhase || this.diceResults.length === 0) {
+            this.diceResults.push(this.diceValue);
+        }
+        
+        // 无论是AI玩家还是人类玩家，都使用相同的逻辑处理骰子结果
         if (this.diceValue === 6) {
-            this.handleSixRoll(rollDiceButton);
+            this.handleSixRoll(rollDiceButton, isCurrentPlayerAi);
         } else {
-            this.handleNonSixRoll();
+            this.handleNonSixRoll(isCurrentPlayerAi);
         }
     }
     
     // 处理掷出6点的情况
-    handleSixRoll(rollDiceButton) {
+    handleSixRoll(rollDiceButton, isCurrentPlayerAi) {
         // 掷出6点，增加连续6点计数
         this.consecutiveSixCount++;
         
         if (this.consecutiveSixCount <= 2) {
             // 第一次或第二次掷出6点，进入连续掷骰子阶段
             this.isRollingPhase = true;
-            const phaseText = this.consecutiveSixCount === 1 ? '请再次掷骰子' : '请第三次掷骰子';
-            document.querySelector('.status').textContent = `掷出了6点，${phaseText}`;
             
-            // 启用骰子按钮让玩家可以再次掷骰子
-            setTimeout(() => {
-                rollDiceButton.disabled = false;
-            }, 500);
+            // 根据玩家类型设置状态文本
+            if (isCurrentPlayerAi) {
+                const phaseText = this.consecutiveSixCount === 1 ? '(再掷一次)' : '(第三次掷骰子)';
+                document.querySelector('.status').textContent = `轮到${this.getColorName(this.currentPlayer.color)}玩家 (AI) ${phaseText}`;
+                
+                // AI玩家自动再次掷骰子
+                setTimeout(() => {
+                    this.rollDice(true); // 传递isAiCall=true参数
+                }, 1000);
+            } else {
+                const phaseText = this.consecutiveSixCount === 1 ? '请再次掷骰子' : '请第三次掷骰子';
+                document.querySelector('.status').textContent = `掷出了6点，${phaseText}`;
+                
+                // 启用骰子按钮让玩家可以再次掷骰子
+                setTimeout(() => {
+                    rollDiceButton.disabled = false;
+                }, 500);
+            }
         } else {
             // 第三次掷出6点，本回合结束
             this.resetTurnState();
@@ -182,26 +199,51 @@ class Game {
     }
     
     // 处理没有掷出6点的情况
-    handleNonSixRoll() {
-        if (this.isRollingPhase) {
-            // 连续掷骰子阶段结束，开始移动棋子阶段
-            this.isRollingPhase = false;
-            this.currentDiceIndex = 0;
-            
-            // 检查是否有可以移动的棋子
-            const hasMovablePiece = this.hasMovablePiece(this.diceResults[this.currentDiceIndex]);
-            
-            if (!hasMovablePiece) {
-                // 没有可以移动的棋子，切换玩家
-                document.querySelector('.status').textContent = '没有可以移动的棋子，本回合结束';
-                setTimeout(() => this.switchPlayer(), 1000);
+    handleNonSixRoll(isCurrentPlayerAi) {
+        // 非6点，结束滚动阶段
+        this.isRollingPhase = false;
+        
+        if (isCurrentPlayerAi) {
+            // AI玩家的处理逻辑
+            if (this.consecutiveSixCount > 0) {
+                // 在连续掷骰子阶段掷出非6点，按照骰子结果顺序移动棋子
+                document.querySelector('.status').textContent = `轮到${this.getColorName(this.currentPlayer.color)}玩家 (AI) (按照骰子顺序移动)`;
             } else {
-                // 有可以移动的棋子，等待玩家选择
-                document.querySelector('.status').textContent = `轮到你了，请选择要移动的棋子 (剩余步数: ${this.diceResults.slice(this.currentDiceIndex).join(', ')})`;
+                // 普通回合，按照骰子结果移动棋子
+                document.querySelector('.status').textContent = `轮到${this.getColorName(this.currentPlayer.color)}玩家 (AI)`;
             }
+            
+            // AI玩家按照骰子顺序自动移动棋子
+            setTimeout(() => {
+                // 先尝试处理多个骰子结果
+                if (this.diceResults.length > 1) {
+                    this.handleMultipleDiceAutoMove();
+                } else {
+                    // 处理单个骰子结果
+                    this.handleSingleDiceAutoMove();
+                }
+            }, 1000);
         } else {
-            // 普通回合（非连续掷骰子阶段）
-            this.handleNormalTurn();
+            // 人类玩家的处理逻辑
+            if (this.consecutiveSixCount > 0) {
+                // 在连续掷骰子阶段掷出非6点，进入移动阶段，按照骰子结果顺序移动棋子
+                this.currentDiceIndex = 0;
+                
+                // 检查是否有可以移动的棋子
+                const hasMovablePiece = this.hasMovablePiece(this.diceResults[this.currentDiceIndex]);
+                
+                if (!hasMovablePiece) {
+                    // 没有可以移动的棋子，切换玩家
+                    document.querySelector('.status').textContent = '没有可以移动的棋子，本回合结束';
+                    setTimeout(() => this.switchPlayer(), 1000);
+                } else {
+                    // 有可以移动的棋子，等待玩家选择
+                    document.querySelector('.status').textContent = `连续掷骰子结束，请按照顺序移动棋子 (剩余步数: ${this.diceResults.slice(this.currentDiceIndex).join(', ')})`;
+                }
+            } else {
+                // 普通回合，进入移动阶段
+                this.handleNormalTurn();
+            }
         }
     }
     
@@ -279,8 +321,8 @@ class Game {
         // 确定当前要使用的骰子步数
         const currentSteps = this.getActiveDiceSteps();
 
-        // 尝试移动棋子
-        if (this.currentPlayer.movePiece(pieceIndex, currentSteps)) {
+        // 尝试移动棋子，传递中心区域进入回调函数
+        if (this.currentPlayer.movePiece(pieceIndex, currentSteps, this.handleCenterEntered.bind(this))) {
             this.handleSuccessfulPieceMove();
         } else {
             this.notifyCannotMovePiece();
@@ -325,6 +367,45 @@ class Game {
         }
         
         return true;
+    }
+
+    // 处理棋子进入中心区域时的奖励逻辑
+    handleCenterEntered() {
+        // 显示奖励提示
+        document.querySelector('.status').textContent = '棋子进入中心区域，奖励一次掷骰子机会！';
+        
+        // 记录是否有未消耗的移动次数
+        const hasRemainingMoves = this.diceResults.length > 0 && this.currentDiceIndex < this.diceResults.length;
+        
+        // 保存当前骰子结果的副本
+        const remainingDiceResults = hasRemainingMoves ? this.diceResults.slice(this.currentDiceIndex) : [];
+        
+        // 奖励玩家一次掷骰子的机会，优先执行
+        setTimeout(() => {
+            // 重置骰子相关状态，准备新的奖励掷骰子
+            this.diceValue = 0;
+            this.diceResults = []; // 清空当前骰子结果
+            this.currentDiceIndex = 0;
+            
+            // 设置状态信息
+            const isCurrentPlayerAi = this.aiControlledPlayers[this.currentPlayer.color];
+            document.querySelector('.status').textContent = `轮到${this.getColorName(this.currentPlayer.color)}玩家 ${isCurrentPlayerAi ? '(AI)' : ''} (奖励掷骰子)`;
+            
+            // 保存原始处理方法，以便在奖励掷骰子后调用
+            this.pendingDiceResults = remainingDiceResults;
+            this.hasPendingDiceResults = hasRemainingMoves;
+            
+            // 如果是AI玩家，自动掷骰子
+            if (isCurrentPlayerAi) {
+                setTimeout(() => {
+                    this.rollDice(true);
+                }, 500);
+            } else {
+                // 启用骰子按钮让玩家可以掷骰子
+                const rollDiceButton = document.getElementById('roll-dice');
+                rollDiceButton.disabled = false;
+            }
+        }, 1000);
     }
 
     // 处理成功移动棋子后的逻辑
@@ -397,6 +478,31 @@ class Game {
     
     // 处理单次骰子结果
     handleSingleDiceResult() {
+        // 检查是否有之前保存的未消耗移动次数需要处理
+        if (this.hasPendingDiceResults) {
+            // 恢复之前保存的骰子结果
+            this.diceResults = this.pendingDiceResults;
+            this.currentDiceIndex = 0;
+            this.hasPendingDiceResults = false;
+            this.pendingDiceResults = null;
+            
+            // 继续处理剩余的移动次数
+            const isCurrentPlayerAi = this.aiControlledPlayers[this.currentPlayer.color];
+            document.querySelector('.status').textContent = `轮到${this.getColorName(this.currentPlayer.color)}玩家 ${isCurrentPlayerAi ? '(AI)' : ''} (继续处理未完成的移动)`;
+            
+            // 检查是否还有可移动的棋子
+            if (this.currentPlayer.hasMovablePiece(this.diceResults[this.currentDiceIndex])) {
+                // 启用骰子按钮让玩家继续移动
+                const rollDiceButton = document.getElementById('roll-dice');
+                rollDiceButton.disabled = true;
+            } else {
+                // 没有可移动的棋子，继续处理下一个骰子结果
+                this.continueWithNextDiceResult();
+            }
+            
+            return;
+        }
+        
         if (this.diceValue !== 6) {
             // 不是6点，重置连续6点计数并切换玩家
             this.consecutiveSixCount = 0;
@@ -521,14 +627,182 @@ class Game {
         }
     }
     
-    // 查找可移动棋子的索引
+    // 查找可移动棋子的索引（优化的AI决策逻辑）
     findMovablePieceIndex(steps) {
+        // 获取当前玩家的所有棋子
+        const playerPieces = this.currentPlayer.pieces;
+        const currentPlayerColor = this.currentPlayer.color;
+        
+        // 存储所有可移动的棋子
+        const movablePieces = [];
+        
+        // 找出所有可移动的棋子
         for (let i = 0; i < 4; i++) {
             if (this.currentPlayer.canMovePiece(i, steps)) {
-                return i;
+                movablePieces.push({
+                    index: i,
+                    piece: playerPieces[i],
+                    position: playerPieces[i].dataset.position,
+                    pathIndex: parseInt(playerPieces[i].dataset.pathIndex)
+                });
             }
         }
-        return -1;
+        
+        if (movablePieces.length === 0) {
+            return -1;
+        }
+        
+        // 优先级1: 找出能将其他玩家棋子送回营地的棋子
+        for (const pieceInfo of movablePieces) {
+            if (this.canCaptureOpponentPiece(pieceInfo, steps)) {
+                return pieceInfo.index;
+            }
+        }
+        
+        // 优先级2: 找出可以送棋子到达终点区域的棋子
+        for (const pieceInfo of movablePieces) {
+            if (this.canMovePieceToFinish(pieceInfo, steps)) {
+                return pieceInfo.index;
+            }
+        }
+        
+        // 优先级3: 掷出6时，优先将棋子从营地移出来
+        if (steps === 6) {
+            const homePieces = movablePieces.filter(p => p.position === 'home');
+            if (homePieces.length > 0) {
+                return homePieces[0].index;
+            }
+        }
+        
+        // 优先级3: 非6值时优先移动走的最远的格子的棋子
+        if (steps !== 6) {
+            const pathPieces = movablePieces.filter(p => p.position === 'path');
+            if (pathPieces.length > 0) {
+                // 按pathIndex降序排序，返回走的最远的棋子
+                pathPieces.sort((a, b) => b.pathIndex - a.pathIndex);
+                return pathPieces[0].index;
+            }
+        }
+        
+        // 优先级4: 优先移动不在星星格子内的棋子
+        const nonSafePieces = [];
+        const safePieces = [];
+        
+        for (const pieceInfo of movablePieces) {
+            if (pieceInfo.position === 'path') {
+                const targetIndex = pieceInfo.pathIndex + steps;
+                const fullPath = this.board.getPlayerFullPath(currentPlayerColor);
+                const pathLength = fullPath.length;
+                
+                // 确保目标索引在有效范围内
+                if (targetIndex < pathLength) {
+                    const targetPos = this.board.getPathPosition(currentPlayerColor, targetIndex);
+                    if (targetPos && !this.board.isInSafePosition(targetPos.x, targetPos.y)) {
+                        nonSafePieces.push(pieceInfo);
+                    } else {
+                        safePieces.push(pieceInfo);
+                    }
+                } else {
+                    // 目标位置在终点区域，不算在星星格子内
+                    nonSafePieces.push(pieceInfo);
+                }
+            } else {
+                // 营地中的棋子，不算在星星格子内
+                nonSafePieces.push(pieceInfo);
+            }
+        }
+        
+        if (nonSafePieces.length > 0) {
+            return nonSafePieces[0].index;
+        }
+        
+        // 默认返回第一个可移动的棋子
+        return movablePieces[0].index;
+    }
+    
+    // 检查棋子是否可以移动到终点区域
+    canMovePieceToFinish(pieceInfo, steps) {
+        const currentPlayerColor = this.currentPlayer.color;
+        
+        // 如果棋子在家中，不能直接移动到终点区域
+        if (pieceInfo.position === 'home') {
+            return false;
+        }
+        
+        // 计算目标位置索引
+        const targetIndex = pieceInfo.pathIndex + steps;
+        const fullPath = this.board.getPlayerFullPath(currentPlayerColor);
+        const pathLength = fullPath.length;
+        
+        // 判断是否正好可以移动到终点区域
+        return targetIndex === pathLength || targetIndex === pathLength + 1;
+    }
+
+    // 检查移动某个棋子是否能将其他玩家的棋子送回营地
+    canCaptureOpponentPiece(pieceInfo, steps) {
+        const currentPlayerColor = this.currentPlayer.color;
+        
+        // 如果棋子在家中，移动后不会捕获任何棋子
+        if (pieceInfo.position === 'home') {
+            return false;
+        }
+        
+        // 计算目标位置索引
+        const targetIndex = pieceInfo.pathIndex + steps;
+        const fullPath = this.board.getPlayerFullPath(currentPlayerColor);
+        const pathLength = fullPath.length;
+        
+        // 确保目标索引在有效范围内
+        if (targetIndex >= pathLength) {
+            return false;
+        }
+        
+        // 获取目标位置的坐标
+        const targetPos = this.board.getPathPosition(currentPlayerColor, targetIndex);
+        if (!targetPos) {
+            return false;
+        }
+        
+        // 检查目标位置是否在安全格子内
+        if (this.board.isInSafePosition(targetPos.x, targetPos.y)) {
+            return false;
+        }
+        
+        // 获取所有棋子
+        const allPieces = document.querySelectorAll('.player-piece');
+        
+        // 检查是否有其他玩家的棋子在目标位置
+        for (const piece of allPieces) {
+            // 跳过当前玩家的棋子
+            if (piece.classList[1].split('-')[1] === currentPlayerColor) {
+                continue;
+            }
+            
+            // 只检查在路径上的棋子
+            if (piece.dataset.position === 'path') {
+                const otherPieceColor = piece.classList[1].split('-')[1];
+                const otherPathIndex = parseInt(piece.dataset.pathIndex);
+                
+                // 获取其他棋子的位置
+                const otherPos = this.board.getPathPosition(otherPieceColor, otherPathIndex);
+                if (!otherPos) {
+                    continue;
+                }
+                
+                // 计算距离，判断是否在同一格子
+                const distance = Math.sqrt(
+                    Math.pow(targetPos.x - otherPos.x, 2) + 
+                    Math.pow(targetPos.y - otherPos.y, 2)
+                );
+                
+                const collisionThreshold = 5; // 碰撞检测阈值（像素）
+                if (distance < collisionThreshold) {
+                    return true; // 可以捕获对方棋子
+                }
+            }
+        }
+        
+        return false;
     }
     
     // 处理自动移动成功
@@ -601,7 +875,7 @@ class Game {
 
     // 尝试AI玩家移动棋子
     attemptAIPieceMove(pieceIndex) {
-        if (this.currentPlayer.movePiece(pieceIndex, this.diceValue)) {
+        if (this.currentPlayer.movePiece(pieceIndex, this.diceValue, this.handleCenterEntered.bind(this))) {
             // 检查是否获胜
             if (this.currentPlayer.hasWon()) {
                 this.handleAIWin();
