@@ -11,7 +11,76 @@ class Board {
             yellow: []
         };
         this.finishPositions = [];
+        
+        // 定义每个玩家的完整路径 - 从各自的起点开始的完整路径
+        this.initializePathArrays();
+        
         this.initializeBoard();
+    }
+    
+    // 初始化路径数组
+    initializePathArrays() {
+        this.redFullCommonPath = [
+            { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 },
+            { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 1 },
+            { x: 6, y: 0 }, { x: 7, y: 0 }, { x: 8, y: 0 },
+            { x: 8, y: 1 }, { x: 8, y: 2 }, { x: 8, y: 3 }, { x: 8, y: 4 }, { x: 8, y: 5 },
+            { x: 9, y: 6 }, { x: 10, y: 6 }, { x: 11, y: 6 }, { x: 12, y: 6 }, { x: 13, y: 6 }, { x: 14, y: 6 },
+            { x: 14, y: 7 }, { x: 14, y: 8 }, { x: 13, y: 8 }, { x: 12, y: 8 }, { x: 11, y: 8 }, { x: 10, y: 8 }, { x: 9, y: 8 },
+            { x: 8, y: 9 }, { x: 8, y: 10 }, { x: 8, y: 11 }, { x: 8, y: 12 }, { x: 8, y: 13 }, { x: 8, y: 14 },
+            { x: 7, y: 14 }, { x: 6, y: 14 }, { x: 6, y: 13 }, { x: 6, y: 12 }, { x: 6, y: 11 }, { x: 6, y: 10 }, { x: 6, y: 9 },
+            { x: 5, y: 8 }, { x: 4, y: 8 }, { x: 3, y: 8 }, { x: 2, y: 8 }, { x: 1, y: 8 }, { x: 0, y: 8 },
+            { x: 0, y: 7 }, {x: 1, y: 7}, {x: 2, y: 7}, {x: 3, y: 7}, {x: 4, y: 7}, {x: 5, y: 7}
+        ];
+
+        this.greenFullCommonPath = [            
+            { x: 8, y: 1 }, { x: 8, y: 2 }, { x: 8, y: 3 }, { x: 8, y: 4 }, { x: 8, y: 5 },
+            { x: 9, y: 6 }, { x: 10, y: 6 }, { x: 11, y: 6 }, { x: 12, y: 6 }, { x: 13, y: 6 }, { x: 14, y: 6 },
+            { x: 14, y: 7 }, { x: 14, y: 8 }, { x: 13, y: 8 }, { x: 12, y: 8 }, { x: 11, y: 8 }, { x: 10, y: 8 }, { x: 9, y: 8 },
+            { x: 8, y: 9 }, { x: 8, y: 10 }, { x: 8, y: 11 }, { x: 8, y: 12 }, { x: 8, y: 13 }, { x: 8, y: 14 },
+            { x: 7, y: 14 }, { x: 6, y: 14 }, { x: 6, y: 13 }, { x: 6, y: 12 }, { x: 6, y: 11 }, { x: 6, y: 10 }, { x: 6, y: 9 },
+            { x: 5, y: 8 }, { x: 4, y: 8 }, { x: 3, y: 8 }, { x: 2, y: 8 }, { x: 1, y: 8 }, { x: 0, y: 8 },
+            { x: 0, y: 7 }, { x: 0, y: 6 }, { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 },
+            { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 1 },
+            { x: 6, y: 0 }, { x: 7, y: 0 }, {x: 7, y: 1}, {x: 7, y: 2}, {x: 7, y: 3}, {x: 7, y: 4}, {x: 7, y: 5}
+        ];
+
+        this.blueFullCommonPath = [
+            { x: 13, y: 8 }, { x: 12, y: 8 }, { x: 11, y: 8 }, { x: 10, y: 8 }, { x: 9, y: 8 },
+            { x: 8, y: 9 }, { x: 8, y: 10 }, { x: 8, y: 11 }, { x: 8, y: 12 }, { x: 8, y: 13 }, { x: 8, y: 14 },
+            { x: 7, y: 14 }, { x: 6, y: 14 }, { x: 6, y: 13 }, { x: 6, y: 12 }, { x: 6, y: 11 }, { x: 6, y: 10 }, { x: 6, y: 9 },
+            { x: 5, y: 8 }, { x: 4, y: 8 }, { x: 3, y: 8 }, { x: 2, y: 8 }, { x: 1, y: 8 }, { x: 0, y: 8 },
+            { x: 0, y: 7 }, { x: 0, y: 6 }, { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 },
+            { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 1 },
+            { x: 6, y: 0 }, { x: 7, y: 0 }, { x: 8, y: 0 },
+            { x: 8, y: 1 }, { x: 8, y: 2 }, { x: 8, y: 3 }, { x: 8, y: 4 }, { x: 8, y: 5 },
+            { x: 9, y: 6 }, { x: 10, y: 6 }, { x: 11, y: 6 }, { x: 12, y: 6 }, { x: 13, y: 6 }, { x: 14, y: 6 },
+            { x: 14, y: 7 }, {x: 13, y: 7}, {x: 12, y: 7}, {x: 11, y: 7}, {x: 10, y: 7}, {x: 9, y: 7}
+        ];
+
+        this.yellowFullCommonPath = [
+           { x: 6, y: 13 }, { x: 6, y: 12 }, { x: 6, y: 11 }, { x: 6, y: 10 }, { x: 6, y: 9 },
+            { x: 5, y: 8 }, { x: 4, y: 8 }, { x: 3, y: 8 }, { x: 2, y: 8 }, { x: 1, y: 8 }, { x: 0, y: 8 },
+            { x: 0, y: 7 }, { x: 0, y: 6 }, { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 },
+            { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 1 },
+            { x: 6, y: 0 }, { x: 7, y: 0 }, { x: 8, y: 0 },
+            { x: 8, y: 1 }, { x: 8, y: 2 }, { x: 8, y: 3 }, { x: 8, y: 4 }, { x: 8, y: 5 },
+            { x: 9, y: 6 }, { x: 10, y: 6 }, { x: 11, y: 6 }, { x: 12, y: 6 }, { x: 13, y: 6 }, { x: 14, y: 6 },
+            { x: 14, y: 7 }, { x: 14, y: 8 }, { x: 13, y: 8 }, { x: 12, y: 8 }, { x: 11, y: 8 }, { x: 10, y: 8 }, { x: 9, y: 8 },
+            { x: 8, y: 9 }, { x: 8, y: 10 }, { x: 8, y: 11 }, { x: 8, y: 12 }, { x: 8, y: 13 }, { x: 8, y: 14 },
+            { x: 7, y: 14 }, {x: 7, y: 13}, {x: 7, y: 12}, {x: 7, y: 11}, {x: 7, y: 10}, {x: 7, y: 9}
+        ];
+    }
+    
+    // 根据玩家颜色获取对应的完整路径数组
+    getPlayerFullPath(color) {
+        switch(color) {
+            case 'red': return this.redFullCommonPath;
+            case 'green': return this.greenFullCommonPath;
+            case 'blue': return this.blueFullCommonPath;
+            case 'yellow': return this.yellowFullCommonPath;
+            default: return this.redFullCommonPath;
+        }
     }
 
     initializeBoard() {
@@ -204,16 +273,7 @@ class Board {
             }
         }
 
-        // 根据玩家颜色获取对应的完整路径数组
-        this.getPlayerFullPath = function(color) {
-            switch(color) {
-                case 'red': return this.redFullCommonPath;
-                case 'green': return this.greenFullCommonPath;
-                case 'blue': return this.blueFullCommonPath;
-                case 'yellow': return this.yellowFullCommonPath;
-                default: return this.redFullCommonPath;
-            }
-        };
+
 
         // 修改路径点样式
         this.pathPositions.forEach((pos, idx) => {
@@ -292,11 +352,19 @@ class Board {
 
 
     getHomePosition(color, index) {
+        if (!this.homePositions[color] || index < 0 || index >= this.homePositions[color].length) {
+            return null;
+        }
         return this.homePositions[color][index];
     }
 
     // 获取路径上指定索引的位置，通过颜色和index获取对应颜色棋子的路径坐标
     getPathPosition(color, index) {
+        // 参数有效性检查
+        if (typeof color !== 'string' || typeof index !== 'number' || isNaN(index)) {
+            return null;
+        }
+        
         // 获取对应颜色的完整路径数组
         const fullPath = this.getPlayerFullPath(color);
         if (!fullPath || fullPath.length === 0) {
@@ -304,21 +372,21 @@ class Board {
         }
         
         // 特殊处理：如果索引等于路径长度+1，表示要进入中心区域
-        // 这里返回null表示要特殊处理，而不是循环索引
         if (index === fullPath.length + 1) {
             return null;
         }
         
-        // 计算实际索引（处理循环情况，但限制在路径范围内）
-        const actualIndex = ((index % fullPath.length) + fullPath.length) % fullPath.length;
+        // 检查索引是否在有效范围内（0到路径长度-1）
+        if (index < 0 || index >= fullPath.length) {
+            return null;
+        }
         
-        // 获取路径点坐标
-        const point = fullPath[actualIndex];
+        // 获取路径点坐标并转换为像素坐标
+        const point = fullPath[index];
         if (!point) {
             return null;
         }
         
-        // 转换为像素坐标
         const cellW = this.width / 15;
         const cellH = this.height / 15;
         
@@ -331,7 +399,10 @@ class Board {
 
     // 根据坐标获取路径位置
     getPathPositionByCoordinates(x, y) {
-        // 查找fullCommonPath中匹配的坐标
+        if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
+            return null;
+        }
+        
         const cellW = this.width / 15;
         const cellH = this.height / 15;
 
@@ -343,6 +414,9 @@ class Board {
     }
 
     getFinishPosition(index) {
+        if (index < 0 || index >= this.finishPositions.length) {
+            return null;
+        }
         return this.finishPositions[index];
     }
 }
