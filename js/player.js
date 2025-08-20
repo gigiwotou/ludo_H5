@@ -31,6 +31,12 @@ class Player {
 
     // 方法：检查棋子是否可以移动
     canMovePiece(pieceIndex, steps) {
+        // 确保steps是有效的数字
+        steps = parseInt(steps);
+        if (isNaN(steps) || steps <= 0) {
+            return false;
+        }
+
         const piece = this.pieces[pieceIndex];
         const position = piece.dataset.position;
 
@@ -39,28 +45,45 @@ class Player {
             return steps === 6;
         }
 
-        // 如果棋子在路径上，检查移动是否有效
-        if (position === 'path') {
-            const currentIndex = parseInt(piece.dataset.pathIndex);
-            const newIndex = currentIndex + steps;
-            
-            // 获取对应颜色的完整路径数组
-            const fullPath = this.board.getPlayerFullPath(this.color);
-            
-            // 只检查移动是否有效，允许移动到有其他玩家棋子的位置
-            // 碰撞检测和将其他棋子送回营地的逻辑在movePiece完成后执行
-            return true;
-        }
-
         // 如果棋子在终点区域，不能再移动
         if (position === 'finish') {
+            return false;
+        }
+
+        // 如果棋子在路径上，检查移动限制
+        if (position === 'path') {
+            const currentIndex = parseInt(piece.dataset.pathIndex);
+            const targetIndex = currentIndex + steps;
+            // 获取对应颜色的完整路径数组
+            const fullPath = this.board.getPlayerFullPath(this.color);
+            const pathLength = fullPath.length;
+            
+            console.log(`路径长度: ${pathLength}, 当前索引: ${currentIndex}, 步数: ${steps}, 目标索引: ${targetIndex}`);
+            
+            // 关键规则：只有当骰子数+位置索引 <= 路径数组长度+1时，才允许移动
+            if (targetIndex > pathLength + 1) {
+                console.log(`不能移动：当前索引${currentIndex} + 步数${steps} = ${targetIndex} > 路径长度+1(${pathLength + 1})`);
+                // 添加alert提示用户不能移动的原因
+                if (steps === 6) {
+                    alert(`不能移动此棋子：移动后会超出路径范围\n当前位置: ${currentIndex}\n步数: ${steps}\n路径长度+1: ${pathLength + 1}`);
+                }
+                return false;
+            }
+            
+            // 目标索引在0到路径长度+1范围内，允许移动
+            if (targetIndex >= 0 && targetIndex <= pathLength + 1) {
+                console.log(`允许移动：当前索引${currentIndex} + 步数${steps} = ${targetIndex} 在有效范围内`);
+                return true;
+            }
+            
+            console.log(`不能移动：目标索引${targetIndex} 超出有效范围`);
             return false;
         }
 
         return false;
     }
 
-    // 方法：移动棋子 - 简化版，直接按照数组索引顺序移动
+    // 方法：移动棋子
     movePiece(pieceIndex, steps) {
         // 确保steps是有效的数字
         steps = parseInt(steps);
@@ -68,7 +91,9 @@ class Player {
             return false;
         }
 
+        // 首先检查是否可以移动（这一步非常重要，确保移动规则被严格遵守）
         if (!this.canMovePiece(pieceIndex, steps)) {
+            console.log(`movePiece: canMovePiece返回false，不允许移动`);
             return false;
         }
 
@@ -80,8 +105,13 @@ class Player {
             piece.dataset.position = 'path';
             piece.dataset.pathIndex = 0;
             const pathPos = this.board.getPathPosition(this.color, 0);
-            this.animatePieceMovement(piece, parseFloat(piece.style.left), parseFloat(piece.style.top), pathPos.x, pathPos.y, 300);
-            return true;
+            if (pathPos) {
+                this.animatePieceMovement(piece, parseFloat(piece.style.left), parseFloat(piece.style.top), pathPos.x, pathPos.y, 300);
+                return true;
+            } else {
+                console.log(`movePiece: 获取路径起点位置失败`);
+                return false;
+            }
         }
 
         // 在路径上移动 - 直接将当前索引加上骰子数字
@@ -91,15 +121,43 @@ class Player {
 
             // 获取对应颜色的完整路径数组
             const fullPath = this.board.getPlayerFullPath(this.color);
+            const pathLength = fullPath.length;
             
-            // 检查是否到达路径终点或超出范围
-            if (newIndex >= fullPath.length) {
-                // 直接移动到中心区域
+            console.log(`移动检查：当前索引=${currentIndex}, 步数=${steps}, 新索引=${newIndex}, 路径长度=${pathLength}, 路径长度+1=${pathLength + 1}`);
+            
+            // 再次检查移动限制（双重保险）
+            if (newIndex > pathLength + 1) {
+                console.log(`movePiece: 移动被阻止 - 新索引=${newIndex} > 路径长度+1=${pathLength + 1}`);
+                alert(`不能移动此棋子：移动后会超出路径范围\n当前位置: ${currentIndex}\n步数: ${steps}\n路径长度+1: ${pathLength + 1}`);
+                return false;
+            }
+            
+            // 如果新索引正好等于路径长度+1，进入中心区域（只有新索引正好等于路径长度+1时才能进入中心区域）
+            if (newIndex === pathLength + 1) {
+                console.log(`进入中心区域：正好移动到路径长度+1的位置`);
+                // 正好移动到路径长度+1的位置，进入中心区域
                 this.moveToCenter(piece);
+            } else if (newIndex === pathLength) {
+                // 新索引等于路径长度，移动到路径终点（索引为pathLength-1的位置）
+                console.log(`移动到路径终点：索引为${pathLength - 1}的位置`);
+                this.animatePathMovement(piece, currentIndex, pathLength - 1, steps);
+                piece.dataset.pathIndex = pathLength - 1;
+            } else if (newIndex >= 0 && newIndex < pathLength) {
+                // 新索引在路径范围内，移动到路径上的普通位置
+                console.log(`移动到路径上的普通位置：索引=${newIndex}`);
+                // 先检查目标位置是否存在
+                const targetPos = this.board.getPathPosition(this.color, newIndex);
+                if (targetPos) {
+                    this.animatePathMovement(piece, currentIndex, newIndex, steps);
+                    piece.dataset.pathIndex = newIndex;
+                } else {
+                    console.log(`movePiece: 获取目标位置失败`);
+                    return false;
+                }
             } else {
-                // 直接移动到目标索引位置
-                this.animatePathMovement(piece, currentIndex, newIndex, steps);
-                piece.dataset.pathIndex = newIndex;
+                // 这种情况理论上不会发生，因为canMovePiece已经检查过了
+                console.log(`不应该到达这里：newIndex=${newIndex}, pathLength=${pathLength}`);
+                return false;
             }
             return true;
         }
@@ -178,6 +236,7 @@ class Player {
     animatePathMovement(piece, startIndex, endIndex, totalSteps) {
         // 获取对应颜色的完整路径数组
         const fullPath = this.board.getPlayerFullPath(this.color);
+        const pathLength = fullPath.length;
         
         // 计算实际移动的方向和总步数
         let stepDirection = Math.sign(endIndex - startIndex);
@@ -196,31 +255,53 @@ class Player {
                 return;
             }
 
-            // 计算下一个格子的索引，不支持循环
+            // 计算下一个格子的索引
             const nextIndex = startIndex + (currentStep + 1) * stepDirection;
             
-            // 检查是否超出路径范围
-            if (nextIndex >= fullPath.length) {
-                // 移动到中心区域
+            console.log(`animatePathMovement: currentStep=${currentStep}, nextIndex=${nextIndex}, pathLength=${pathLength}`);
+            
+            // 检查是否到达中心区域 - 只有nextIndex正好等于路径长度+1时才能进入中心区域
+            if (nextIndex === pathLength + 1) {
+                console.log(`animatePathMovement: 进入中心区域 - nextIndex=${nextIndex} === pathLength+1=${pathLength+1}`);
+                // 正好移动到路径长度+1的位置，进入中心区域
                 this.moveToCenter(piece);
                 return;
             }
             
-            const nextPos = this.board.getPathPosition(this.color, nextIndex);
+            // 检查是否到达路径终点区域
+            if (nextIndex >= pathLength) {
+                console.log(`animatePathMovement: 到达路径终点区域 - nextIndex=${nextIndex} >= pathLength=${pathLength}`);
+                // 超出路径范围但不是正好到中心区域的位置，移动到路径终点
+                const endPos = this.board.getPathPosition(this.color, pathLength - 1);
+                this.animatePieceMovement(piece, currentX, currentY, endPos.x, endPos.y, animationDuration);
+                piece.dataset.pathIndex = pathLength - 1;
+                // 移动完成后检查目标位置是否有其他玩家的棋子
+                setTimeout(() => this.checkAndSendBackOtherPieces(piece), animationDuration);
+                return;
+            }
+            
+            // 检查nextIndex是否在有效范围内
+            if (nextIndex >= 0 && nextIndex < pathLength) {
+                const nextPos = this.board.getPathPosition(this.color, nextIndex);
 
-            // 更新棋子数据
-            piece.dataset.pathIndex = nextIndex;
+                // 更新棋子数据
+                piece.dataset.pathIndex = nextIndex;
 
-            // 动画移动到下一个格子
-            this.animatePieceMovement(piece, currentX, currentY, nextPos.x, nextPos.y, animationDuration);
+                // 动画移动到下一个格子
+                this.animatePieceMovement(piece, currentX, currentY, nextPos.x, nextPos.y, animationDuration);
 
-            // 更新当前位置
-            currentX = nextPos.x;
-            currentY = nextPos.y;
-            currentStep++;
+                // 更新当前位置
+                currentX = nextPos.x;
+                currentY = nextPos.y;
+                currentStep++;
 
-            // 安排下一步移动
-            setTimeout(moveOneStep, animationDuration);
+                // 安排下一步移动
+                setTimeout(moveOneStep, animationDuration);
+            } else {
+                console.log(`animatePathMovement: 无效索引 - nextIndex=${nextIndex}`);
+                // 移动完成后检查目标位置是否有其他玩家的棋子
+                this.checkAndSendBackOtherPieces(piece);
+            }
         };
 
         // 开始移动

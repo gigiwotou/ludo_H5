@@ -303,7 +303,13 @@ class Board {
             return null;
         }
         
-        // 计算实际索引（处理循环情况）
+        // 特殊处理：如果索引等于路径长度+1，表示要进入中心区域
+        // 这里返回null表示要特殊处理，而不是循环索引
+        if (index === fullPath.length + 1) {
+            return null;
+        }
+        
+        // 计算实际索引（处理循环情况，但限制在路径范围内）
         const actualIndex = ((index % fullPath.length) + fullPath.length) % fullPath.length;
         
         // 获取路径点坐标
