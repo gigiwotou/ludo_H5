@@ -18,7 +18,7 @@ body {
 .game-container {
     text-align: center;
     width: 100%;
-    max-width: 500px;
+    max-width: 600px;
     position: relative;
 }
 
@@ -82,9 +82,9 @@ body {
 /* 棋盘样式 */
 .game-board {
     width: 90vw;
-    max-width: 500px;
+    max-width: 600px;
     height: 90vw;
-    max-height: 500px;
+    max-height: 600px;
     background-color: #4a4a4a;
     border: 2px solid #333;
     border-radius: 10px;
@@ -294,7 +294,7 @@ body {
     border: 2px solid #333;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    z-index: 10;
+    z-index: 15;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -360,15 +360,24 @@ body {
     background-color: #2196f3;
 }
 
-/* 出发点星星样式 */
-.start-star {
+.safe-star {
     position: absolute;
-    width: 2%;
-    height: 2%;
-    background-color: #ffd700;
-    background-color: #ffd700;
+    width: 4%;
+    height: 4%;
+    background-color: #960cf2;
     clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    left: 50%;
+    top: 50%;
     transform: translate(-50%, -50%);
+    animation: pulse 2s infinite;
+    z-index: 11;
+}
+
+/* 安全星星脉动动画 */
+@keyframes pulse {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.2); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 .green-home {

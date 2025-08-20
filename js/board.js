@@ -11,6 +11,7 @@ class Board {
             yellow: []
         };
         this.finishPositions = [];
+        this.safePositions = []; // 存储安全格子的位置
         
         // 定义每个玩家的完整路径 - 从各自的起点开始的完整路径
         this.initializePathArrays();
@@ -87,6 +88,7 @@ class Board {
         this.createHomeAreas();
         this.createFinishArea();
         this.createPath();
+        this.addSafePositionStars();
     }
 
     createHomeAreas() {
@@ -273,8 +275,6 @@ class Board {
             }
         }
 
-
-
         // 修改路径点样式
         this.pathPositions.forEach((pos, idx) => {
             const pathElement = document.createElement('div');
@@ -328,24 +328,46 @@ class Board {
 
         
     }
-
-    addStartPositionStars() {
-        // 玩家出发点索引（与player.js中的getStartIndex对应）
-        const startIndices = {
-            'red': 7,
-            'green': 10,
-            'blue': 42,
-            'yellow': 39
-        };
-
-        // 为每个玩家的出发点添加星星
-        Object.values(startIndices).forEach(index => {
-            const pos = this.pathPositions[index];
+    
+    // 添加安全星星格子（安全格子内的棋子不会被踢回营地）
+    addSafePositionStars() {
+        // 安全格子的坐标位置
+        const safeGridPositions = [
+            {x: 6, y: 13}, {x: 2, y: 8}, {x: 1, y: 6}, {x: 6, y: 2},
+            {x: 8, y: 1}, {x: 12, y: 6}, {x: 13, y: 8}, {x: 8, y: 12}
+        ];
+        
+        const cellW = this.width / 15;
+        const cellH = this.height / 15;
+        
+        safeGridPositions.forEach(pos => {
+            // 将网格坐标转换为像素坐标
+            const pixelX = pos.x * cellW + cellW / 2;
+            const pixelY = pos.y * cellH + cellH / 2;
+            
+            // 创建星星元素
             const star = document.createElement('div');
-            star.className = 'start-star';
-            star.style.left = `${pos.x - (this.width * 0.01)}px`; // 星星宽度的一半
-            star.style.top = `${pos.y - (this.height * 0.01)}px`; // 星星高度的一半
+            star.className = 'safe-star';
+            // 设置星星位置为格子的中心，确保transform: translate(-50%, -50%)在CSS中实现了居中
+            star.style.left = `${pixelX}px`;
+            star.style.top = `${pixelY}px`;
             this.boardElement.appendChild(star);
+            
+            // 存储安全格子的像素坐标
+            this.safePositions.push({x: pixelX, y: pixelY});
+        });
+    }
+    
+    // 检查指定坐标是否在安全格子内
+    isInSafePosition(x, y) {
+        const threshold = 5; // 检查阈值
+        
+        return this.safePositions.some(pos => {
+            const distance = Math.sqrt(
+                Math.pow(x - pos.x, 2) + 
+                Math.pow(y - pos.y, 2)
+            );
+            return distance < threshold;
         });
     }
 

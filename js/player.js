@@ -105,14 +105,14 @@ class Player {
             const pathLength = fullPath.length;
             
             // 根据不同的移动情况处理
-            if (newIndex === pathLength) {
-                // 正好移动到路径长度+1的位置，进入中心区域
-                this.moveToCenter(piece);
-            } else if (newIndex === pathLength - 1) {
-                // 新索引等于路径长度，移动到路径终点
+            if (newIndex > pathLength) {
+                // 超出路径范围，不能移动
+                return false;
+            } else if (newIndex === pathLength) {
+                // 正好移动到路径长度的位置，先移动到路径终点，最后一步再进入中心区域
                 this.animatePathMovement(piece, currentIndex, pathLength - 1, steps);
                 piece.dataset.pathIndex = pathLength - 1;
-            } else if (newIndex >= 0 && newIndex < pathLength - 1) {
+            } else if (newIndex >= 0 && newIndex < pathLength) {
                 // 新索引在路径范围内，移动到路径上的普通位置
                 const targetPos = this.board.getPathPosition(this.color, newIndex);
                 if (targetPos) {
@@ -242,19 +242,25 @@ class Player {
         const pathLength = fullPath.length;
         
         // 处理不同的移动情况
-        if (nextIndex === pathLength + 1) {
-            // 正好移动到路径长度+1的位置，进入中心区域
-            this.moveToCenter(piece);
-        } else if (nextIndex >= pathLength) {
-            // 超出路径范围但不是正好到中心区域的位置，移动到路径终点
+        if (nextIndex === pathLength) {
+            // 正好移动到路径长度的位置，进入中心区域
+            // 先移动到路径终点
             const endPos = this.board.getPathPosition(this.color, pathLength - 1);
             this.animatePieceMovement(piece, currentX, currentY, endPos.x, endPos.y, animationDuration);
-            piece.dataset.pathIndex = pathLength - 1;
-            // 移动完成后检查目标位置是否有其他玩家的棋子
+            
+            // 动画完成后进入中心区域
             setTimeout(() => {
+                this.moveToCenter(piece);
                 this.checkAndSendBackOtherPieces(piece);
                 if (onComplete) onComplete();
             }, animationDuration);
+        } else if (nextIndex === pathLength + 1) {
+            // 正好移动到路径长度+1的位置，进入中心区域
+            this.moveToCenter(piece);
+        } else if (nextIndex > pathLength) {
+            // 超出路径范围，不能移动
+            this.checkAndSendBackOtherPieces(piece);
+            if (onComplete) onComplete();
         } else if (nextIndex >= 0 && nextIndex < pathLength) {
             const nextPos = this.board.getPathPosition(this.color, nextIndex);
             if (nextPos) {
@@ -327,6 +333,12 @@ class Player {
             // 如果距离非常小（小于一个阈值），则认为在同一格子
             const collisionThreshold = 5; // 碰撞检测阈值（像素）
             if (distance < collisionThreshold) {
+                // 检查该位置是否是安全格子
+                if (this.board.isInSafePosition(currentPos.x, currentPos.y)) {
+                    // 在安全格子内，不将棋子送回营地
+                    return;
+                }
+                
                 // 获取该棋子的玩家颜色和索引
                 const pieceIndex = parseInt(piece.dataset.index);
                 
