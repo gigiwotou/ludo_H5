@@ -220,13 +220,6 @@ class Game {
             return;
         }
         
-        // 如果只有一个棋子在棋盘上且骰子没有6点，自动结束玩家回合
-        if (activePiecesCount === 1 && this.diceValue !== 6) {
-            document.querySelector('.status').textContent = '只有一个棋子在场且非6点，自动结束回合';
-            setTimeout(() => this.switchPlayer(), 1000);
-            return;
-        }
-        
         // 如果只有一个棋子在棋盘上且有可移动的棋子（只有6点的情况才会执行到这里）
         if (activePiecesCount === 1 && hasMovablePiece) {
             setTimeout(() => this.autoMoveHumanPiece(), 500);

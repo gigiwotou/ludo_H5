@@ -58,10 +58,8 @@ class Player {
             const pathLength = fullPath.length;
             
             // 关键规则：只有当骰子数+位置索引 <= 路径数组长度+1时，才允许移动
-            if (targetIndex > pathLength + 1 || targetIndex < 0) {
-                if (steps === 6) {
-                    alert(`不能移动此棋子：移动后会超出路径范围\n当前位置: ${currentIndex}\n步数: ${steps}\n路径长度+1: ${pathLength + 1}`);
-                }
+            if (targetIndex > pathLength || targetIndex < 0) {
+                alert(`不能移动此棋子：移动后会超出路径范围\n当前位置: ${currentIndex}\n步数: ${steps}\n路径长度+1: ${pathLength + 1}`);
                 return false;
             }
             
@@ -107,14 +105,14 @@ class Player {
             const pathLength = fullPath.length;
             
             // 根据不同的移动情况处理
-            if (newIndex === pathLength + 1) {
+            if (newIndex === pathLength) {
                 // 正好移动到路径长度+1的位置，进入中心区域
                 this.moveToCenter(piece);
-            } else if (newIndex === pathLength) {
+            } else if (newIndex === pathLength - 1) {
                 // 新索引等于路径长度，移动到路径终点
                 this.animatePathMovement(piece, currentIndex, pathLength - 1, steps);
                 piece.dataset.pathIndex = pathLength - 1;
-            } else if (newIndex >= 0 && newIndex < pathLength) {
+            } else if (newIndex >= 0 && newIndex < pathLength - 1) {
                 // 新索引在路径范围内，移动到路径上的普通位置
                 const targetPos = this.board.getPathPosition(this.color, newIndex);
                 if (targetPos) {
