@@ -57,12 +57,21 @@ class Player {
             const fullPath = this.board.getPlayerFullPath(this.color);
             const pathLength = fullPath.length;
             
-            // 关键规则：只有当骰子数+位置索引 <= 路径数组长度+1时，才允许移动
-            if (targetIndex > pathLength || targetIndex < 0) {
-                alert(`不能移动此棋子：移动后会超出路径范围\n当前位置: ${currentIndex}\n步数: ${steps}\n路径长度+1: ${pathLength + 1}`);
+            // 关键规则：检查移动是否有效
+            // 1. 如果目标位置为负数，不允许移动
+            if (targetIndex < 0) {
+                alert(`不能移动此棋子：移动后会超出路径范围\n当前位置: ${currentIndex}\n步数: ${steps}\n路径长度+1: ${pathLength}`);
                 return false;
             }
             
+            // 2. 特殊规则：当棋子在路径最后一格且掷骰子值为1时，允许移动到终点区域
+            // targetIndex === pathLength 表示需要进入中心区域
+            if (targetIndex > pathLength) {
+                alert(`不能移动此棋子：移动后会超出路径范围\n当前位置: ${currentIndex}\n步数: ${steps}\n路径长度+1: ${pathLength}`);
+                return false;
+            }
+            
+            // 3. 普通移动：只要目标位置不超过路径长度，就允许移动
             return true;
         }
 
@@ -109,9 +118,10 @@ class Player {
                 // 超出路径范围，不能移动
                 return false;
             } else if (newIndex === pathLength) {
-                // 正好移动到路径长度的位置，先移动到路径终点，最后一步再进入中心区域
-                this.animatePathMovement(piece, currentIndex, pathLength - 1, steps, onCenterEnteredCallback);
-                piece.dataset.pathIndex = pathLength - 1;
+                // 正好移动到路径长度的位置，需要进入中心区域
+                // 调用animatePathMovement，它会通过processNextPathIndex处理进入中心区域的逻辑
+                this.animatePathMovement(piece, currentIndex, pathLength, steps, onCenterEnteredCallback);
+                piece.dataset.pathIndex = pathLength;
             } else if (newIndex >= 0 && newIndex < pathLength) {
                 // 新索引在路径范围内，移动到路径上的普通位置
                 const targetPos = this.board.getPathPosition(this.color, newIndex);
@@ -149,11 +159,32 @@ class Player {
         // 动画移动到目标位置
         this.animatePieceMovement(piece, parseFloat(piece.style.left), parseFloat(piece.style.top), targetPos.x, targetPos.y, 500);
         
-        // 棋子成功进入中心区域后，调用回调函数
-        if (typeof onCenterEnteredCallback === 'function') {
+        // 检查是否所有4个棋子都已进入终点区域
+        if (pieceCount === 4) {
+            // 500毫秒后检查游戏是否应该结束（给动画时间完成）
             setTimeout(() => {
-                onCenterEnteredCallback();
+                // 再次检查，确保计数准确
+                const updatedFinishPieces = document.querySelectorAll(`.player-piece.player-${color}[data-position="finish"]`);
+                if (updatedFinishPieces.length === 4) {
+                    // 创建一个特殊的回调对象，包含游戏结束信息
+                    const gameOverInfo = {
+                        isGameOver: true,
+                        winningColor: color
+                    };
+                    
+                    // 如果有回调函数，传递游戏结束信息
+                    if (typeof onCenterEnteredCallback === 'function') {
+                        onCenterEnteredCallback(gameOverInfo);
+                    }
+                }
             }, 500);
+        } else {
+            // 棋子成功进入中心区域后，调用回调函数
+            if (typeof onCenterEnteredCallback === 'function') {
+                setTimeout(() => {
+                    onCenterEnteredCallback();
+                }, 500);
+            }
         }
     }
     

@@ -370,7 +370,23 @@ class Game {
     }
 
     // 处理棋子进入中心区域时的奖励逻辑
-    handleCenterEntered() {
+    handleCenterEntered(gameOverInfo = null) {
+        // 检查游戏是否结束
+        if (gameOverInfo && gameOverInfo.isGameOver) {
+            this.isGameOver = true;
+            const winnerColor = gameOverInfo.winningColor;
+            document.querySelector('.status').textContent = `${this.getColorName(winnerColor)}玩家获胜！`;
+            
+            // 禁用骰子按钮
+            const rollDiceButton = document.getElementById('roll-dice');
+            rollDiceButton.disabled = true;
+            
+            // 显示胜利提示
+            alert(`${this.getColorName(winnerColor)}玩家获胜！`);
+            
+            return; // 游戏结束，不再执行其他逻辑
+        }
+        
         // 显示奖励提示
         document.querySelector('.status').textContent = '棋子进入中心区域，奖励一次掷骰子机会！';
         
